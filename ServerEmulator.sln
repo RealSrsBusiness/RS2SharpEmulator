@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emulator317", "Emulator317\Emulator317.csproj", "{25EF3554-D894-48A8-A5EC-ADC7E0D7F663}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerEmulator", "Emulator317\ServerEmulator.csproj", "{25EF3554-D894-48A8-A5EC-ADC7E0D7F663}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
