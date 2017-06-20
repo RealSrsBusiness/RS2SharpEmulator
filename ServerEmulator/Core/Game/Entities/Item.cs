@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Emulator317.Server.Game.Model
+namespace ServerEmulator.Core.Game
 {
-    class Tile
+    class Item
     {
     }
 }

@@ -1,10 +1,9 @@
-﻿using System;
+﻿using ServerEmulator.Core;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using Emulator317.Server.Network;
-using Emulator317.Core;
 
-namespace Emulator317.Game.Definitions
+namespace ServerEmulator.Core.Game
 {
     /// <summary>
     /// Represents a player in the world

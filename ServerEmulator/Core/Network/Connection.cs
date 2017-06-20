@@ -1,12 +1,10 @@
-﻿using Emulator317.IO;
-using Emulator317.Server.IO;
-using Emulator317.Server.Network;
+﻿using ServerEmulator.Core.IO;
 using System;
 using System.IO;
 using System.Net.Sockets;
 using System.Timers;
 
-namespace Emulator317.Network
+namespace ServerEmulator.Core.Network
 {
     delegate void ConnectionUpdate(Connection c);
     delegate void PacketHandle(byte opCode, bool firstByte);

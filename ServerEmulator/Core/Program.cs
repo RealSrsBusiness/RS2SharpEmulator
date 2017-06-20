@@ -1,8 +1,4 @@
-﻿using Emulator317.Core;
-using Emulator317.Game;
-using Emulator317.Network;
-using Emulator317.Server.IO;
-using Emulator317.Server.Network;
+﻿using ServerEmulator.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,9 +6,9 @@ using System.IO;
 using System.Text;
 using System.Threading;
 
-namespace Emulator317
+namespace ServerEmulator.Core
 {
-    class Program
+    internal class Program
     {
         public static Processor Processor { get; private set; }
         const bool DEBUG = true;
@@ -270,7 +266,7 @@ namespace Emulator317
         static Stopwatch sw = new Stopwatch();
         static void Main(string[] args)
         {
-            Console.Title = "Server Emulator Rev #317";
+            Console.Title = "Server Emulator Rev #" + Constants.SERVER_REV;
 
             if(!Directory.Exists(Constants.DATA_PATH))
             {
@@ -338,21 +334,21 @@ namespace Emulator317
 
         /*
          * Server commands:
-         * status = shows the status including listening port and binded socket; connected clients
-         * online = lists the player who are online
-         * count = counts the player who are online
-         * save = saves all player
-         * restart = saves all player disconnects them and finally restarts the server
+         * status = shows the status including listening port and bound socket; connected clients
+         * online = lists online player
+         * count = number of players online
+         * save = saves all players
+         * restart = saves all players, disconnects them and restarts the server
          * close = shuts the server down
-         * update <seconds> <restart/restartPC/restart+update>= updates the server
+         * update <seconds> <restart/restartPC/restart+update>= update the server
          * kick <ip/p> [value] = kicks a player or ip address
          * ban <ip/p> [value] = bans a player or ip address
-         * pause = pauses the listener; all open connections are kept open howeever no new connections are established
+         * pause = pauses the listener; all open connections are kept open, however no new connections are established
          * prune <yes/no(listener)> = disconnects every player; the server keeps running
          * start = starts the listener
          * msg <message> = global message
          * 
-         * Player manipulating commands
+         * Player commands:
          * skill <player> <skill> <xp>
          * give <player> <item> <count>
          * kill <player>

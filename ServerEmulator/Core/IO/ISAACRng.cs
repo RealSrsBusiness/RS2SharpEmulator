@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Emulator317.Server.IO
+
+namespace ServerEmulator.Core.IO
 {
     class ISAACRng
     {

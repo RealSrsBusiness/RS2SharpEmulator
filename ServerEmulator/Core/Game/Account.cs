@@ -5,9 +5,9 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Serialization;
-using static Emulator317.Constants;
+using static ServerEmulator.Core.Constants;
 
-namespace Emulator317.Server.Game.Definitions
+namespace ServerEmulator.Core.Game
 {
     struct ItemStack
     {

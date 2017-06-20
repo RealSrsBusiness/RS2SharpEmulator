@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace Emulator317.IO
+namespace ServerEmulator.Core.IO
 {
     class RSStreamWriter
     {

@@ -1,6 +1,5 @@
-﻿using Emulator317.Network;
-using Emulator317.Server.Game.Definitions;
-using Emulator317.Server.Network;
+﻿using ServerEmulator.Core.Game;
+using ServerEmulator.Core.Network;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,11 +7,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using static Emulator317.Constants;
+using static ServerEmulator.Core.Constants;
 
-namespace Emulator317.Game
+namespace ServerEmulator.Core
 {
-    class Processor
+    internal class Processor
     {
         Thread clientAcceptor, gameProcessing;
         List<Connection> connections = new List<Connection>(MAX_CONNECTIONS);

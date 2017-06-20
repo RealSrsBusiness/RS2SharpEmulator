@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Emulator317.Server.Game.Definitions
+namespace ServerEmulator.Core.Game
 {
-    class GameObject
+    interface IContent
     {
+        void Load();
     }
 }

@@ -1,12 +1,10 @@
-﻿using Emulator317.IO;
+﻿using ServerEmulator.Core.Game;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using static Emulator317.Network.Connection;
-using static Emulator317.Constants.Packets;
-using Emulator317.Game;
+using static ServerEmulator.Core.Constants.Packets;
 
-namespace Emulator317.Network
+namespace ServerEmulator.Core.Network
 {
     //delegate void Action();
 

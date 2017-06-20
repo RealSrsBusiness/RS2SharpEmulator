@@ -1,14 +1,12 @@
-﻿using Emulator317.IO;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using static Emulator317.Constants.Frames;
-using Emulator317.Core;
-using Emulator317.Game;
+using static ServerEmulator.Core.Constants.Frames;
 
-namespace Emulator317.Network
+
+namespace ServerEmulator.Core.Network
 {
     class StaticPackets
     {

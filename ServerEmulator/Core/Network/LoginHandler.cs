@@ -1,16 +1,12 @@
-﻿using Emulator317.Game;
-using Emulator317.Game.Definitions;
-using Emulator317.IO;
-using Emulator317.Network;
-using Emulator317.Server.Game.Definitions;
-using Emulator317.Server.IO;
+﻿using ServerEmulator.Core.Game;
+using ServerEmulator.Core.IO;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-using static Emulator317.Constants.LoginResponse;
+using static ServerEmulator.Core.Constants.LoginResponse;
 
-namespace Emulator317.Server.Network
+namespace ServerEmulator.Core.Network
 {
     enum LoginStage
     {

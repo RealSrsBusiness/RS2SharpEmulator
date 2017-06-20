@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Emulator317
+namespace ServerEmulator.Core.Game
 {
-    interface IContent
+    class Tile
     {
-        void Load();
     }
 }

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Emulator317.Server.Game.Definitions
+namespace ServerEmulator.Core.Game
 {
-    class Item
+    class GameObject
     {
     }
 }

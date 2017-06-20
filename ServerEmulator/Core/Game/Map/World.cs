@@ -1,9 +1,8 @@
-﻿using Emulator317.Server.Game.World;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Emulator317.Game
+namespace ServerEmulator.Core.Game
 {
     /// <summary>
     /// Represents the entire gameworld 

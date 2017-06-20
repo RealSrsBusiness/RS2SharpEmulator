@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Emulator317.Core
+namespace ServerEmulator.Core
 {
-    public static class Extensions
+    internal static class Extensions
     {
         public static void EncodeValue(this List<bool> array, int count, int value)
         {

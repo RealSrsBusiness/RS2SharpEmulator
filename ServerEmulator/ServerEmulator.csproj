@@ -7,8 +7,8 @@
     <ProjectGuid>{25EF3554-D894-48A8-A5EC-ADC7E0D7F663}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Emulator317</RootNamespace>
-    <AssemblyName>Emulator317</AssemblyName>
+    <RootNamespace>ServerEmulator</RootNamespace>
+    <AssemblyName>Emulator</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -38,27 +38,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Server\Constants.cs" />
-    <Compile Include="Server\Core\Extensions.cs" />
-    <Compile Include="Server\Core\IContent.cs" />
-    <Compile Include="Server\Core\Processor.cs" />
-    <Compile Include="Server\Game\Client.cs" />
-    <Compile Include="Server\Game\Account.cs" />
-    <Compile Include="Server\Game\World\Definitions\GameObject.cs" />
-    <Compile Include="Server\Game\World\Definitions\Item.cs" />
-    <Compile Include="Server\Game\Player.cs" />
-    <Compile Include="Server\Game\World\Definitions\NPC.cs" />
-    <Compile Include="Server\Game\World\Region.cs" />
-    <Compile Include="Server\Game\World\Tile.cs" />
-    <Compile Include="Server\Game\World\World.cs" />
-    <Compile Include="Server\IO\ISAACRng.cs" />
-    <Compile Include="Server\IO\RSStreamReader.cs" />
-    <Compile Include="Server\IO\RSStreamWriter.cs" />
-    <Compile Include="Server\Network\Connection.cs" />
-    <Compile Include="Server\Network\LoginHandler.cs" />
-    <Compile Include="Server\Network\StaticPackets.cs" />
-    <Compile Include="Server\Network\PacketHandler.cs" />
-    <Compile Include="Server\Program.cs" />
+    <Compile Include="Core\Constants.cs" />
+    <Compile Include="Core\Extensions.cs" />
+    <Compile Include="Core\Game\IContent.cs" />
+    <Compile Include="Core\Processor.cs" />
+    <Compile Include="Core\Game\Client.cs" />
+    <Compile Include="Core\Game\Account.cs" />
+    <Compile Include="Core\Game\Entities\GameObject.cs" />
+    <Compile Include="Core\Game\Entities\Item.cs" />
+    <Compile Include="Core\Game\Entities\Player.cs" />
+    <Compile Include="Core\Game\Entities\NPC.cs" />
+    <Compile Include="Core\Game\Map\Region.cs" />
+    <Compile Include="Core\Game\Map\Tile.cs" />
+    <Compile Include="Core\Game\Map\World.cs" />
+    <Compile Include="Core\IO\ISAACRng.cs" />
+    <Compile Include="Core\IO\RSStreamReader.cs" />
+    <Compile Include="Core\IO\RSStreamWriter.cs" />
+    <Compile Include="Core\Network\Connection.cs" />
+    <Compile Include="Core\Network\LoginHandler.cs" />
+    <Compile Include="Core\Network\StaticPackets.cs" />
+    <Compile Include="Core\Network\PacketHandler.cs" />
+    <Compile Include="Core\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

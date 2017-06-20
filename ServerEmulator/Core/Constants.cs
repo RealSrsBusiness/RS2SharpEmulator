@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Emulator317
+namespace ServerEmulator.Core
 {
-    public class Constants
+    internal static class Constants
     {
         public const int PORT = 43594;
         public const int CYCLE_TIME = 600;
@@ -13,7 +13,6 @@ namespace Emulator317
         public const int SERVER_REV = 317;
         public const int SPAWN_X = 3200, SPAWN_Y = 3200;
         public const bool ENABLE_RSA_ENCRYPTION = false;
-
 
         public const string SERVER_NAME = "C# 317 Emulator";
         public const string WELCOME_MSG = "Welcome to " + SERVER_NAME;

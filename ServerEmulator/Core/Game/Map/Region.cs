@@ -1,10 +1,9 @@
-﻿using Emulator317.Server.Game.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Emulator317.Server.Game.World
+namespace ServerEmulator.Core.Game
 {
     class Region
     {

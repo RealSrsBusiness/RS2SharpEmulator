@@ -1,15 +1,13 @@
-﻿using Emulator317.Core;
-using Emulator317.Game.Definitions;
-using Emulator317.Network;
-using Emulator317.Server.Game.Definitions;
-using Emulator317.Server.Network;
+﻿using ServerEmulator.Core;
+using ServerEmulator.Core.Network;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using static Emulator317.Constants;
 
-namespace Emulator317.Game
+using static ServerEmulator.Core.Constants;
+
+namespace ServerEmulator.Core.Game
 {
     /// <summary>
     /// represents a single client, holds entities seen by a client
