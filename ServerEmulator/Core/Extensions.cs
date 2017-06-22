@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -15,9 +16,29 @@ namespace ServerEmulator.Core
             }
         }
 
-        public static void DecodeValue()
+        public static byte[] ToByteArray(this List<bool> array)
         {
+            int count = (array.Count + 7) / 8;
+            byte[] bytes = new byte[count];
+            int bytePos = 0, bitPos = 0;
 
+            const byte DABIT = 1 << 7; //128
+
+            for (int i = 0; i < array.Count; i++)
+            {
+                if(array[i])
+                    bytes[bytePos] |= (byte)(DABIT >> bitPos);
+
+                bitPos++;
+                if(bitPos > 7)
+                {
+                    bytePos++;
+                    bitPos = 0;
+                }
+                    
+            }
+
+            return bytes;
         }
 
         public static string LongToString(long l)

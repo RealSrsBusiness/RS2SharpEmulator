@@ -66,8 +66,6 @@ namespace ServerEmulator.Core
             Program.Debug("Performance {0}", sw.ElapsedMilliseconds);
         }
 
-
-
         public delegate void TestDele();
 
         static event TestDele events;
@@ -264,6 +262,7 @@ namespace ServerEmulator.Core
         }
 
         static Stopwatch sw = new Stopwatch();
+
         static void Main(string[] args)
         {
             Console.Title = "Server Emulator Rev #" + Constants.SERVER_REV;
@@ -344,7 +343,7 @@ namespace ServerEmulator.Core
          * kick <ip/p> [value] = kicks a player or ip address
          * ban <ip/p> [value] = bans a player or ip address
          * pause = pauses the listener; all open connections are kept open, however no new connections are established
-         * prune <yes/no(listener)> = disconnects every player; the server keeps running
+         * purge <yes/no(listener)> = disconnects every player; the server keeps running
          * start = starts the listener
          * msg <message> = global message
          * 

@@ -8,14 +8,16 @@ namespace ServerEmulator.Core
     {
         public const int PORT = 43594;
         public const int CYCLE_TIME = 600;
+        public const int SUB_CYCLES = 3;
         public const int MAX_CONNECTIONS = 3072;
         public const int MAX_PLAYER = 2048;
         public const int SERVER_REV = 317;
-        public const int SPAWN_X = 3200, SPAWN_Y = 3200;
         public const bool ENABLE_RSA_ENCRYPTION = false;
 
-        public const string SERVER_NAME = "C# 317 Emulator";
+        public const string SERVER_NAME = "C# Server Emulator";
         public const string WELCOME_MSG = "Welcome to " + SERVER_NAME;
+        public const int SPAWN_X = 3200, SPAWN_Y = 3200;
+
         public const string DATA_PATH = "data\\";
         public const string PLUGIN_PATH = DATA_PATH + "plugins\\";
         public const string CONTENT_PATH = DATA_PATH + "content\\";
@@ -113,7 +115,7 @@ namespace ServerEmulator.Core
             public const sbyte JUST_LEFT_ANOTHER_WORLD = 21;
         }
 
-        public static class Frames
+        public static class Frames //server -> client
         {
             public const byte CONFIG_SET = 36;
             public const byte MSG_SEND = 253;

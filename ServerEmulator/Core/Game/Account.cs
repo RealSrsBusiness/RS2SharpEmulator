@@ -31,8 +31,8 @@ namespace ServerEmulator.Core.Game
 
     class Account
     {
-        static XmlSerializer serializer = new XmlSerializer(typeof(Account));
-        static SHA256 hashing = SHA256.Create();
+        //static XmlSerializer serializer = new XmlSerializer(typeof(Account));
+        //static SHA256 hashing = SHA256.Create();
 
         string email, username, password, displayname, lastIp;
         DateTime registerDate, lastLogin, membership, mutedUntil, bannedUntil;
@@ -53,10 +53,6 @@ namespace ServerEmulator.Core.Game
         public string[] ignores = new string[100];       
 
 
-        public ushort RegionX { get { return (ushort)(x >> 3); } }
-        public ushort RegionY { get { return (ushort)(y >> 3); } }
-
-
         private Account() { }
 
         public static void Create(string username, string password, Rights rights = Rights.PLAYER)
@@ -73,7 +69,7 @@ namespace ServerEmulator.Core.Game
 
         public static sbyte Load(string username, string password, ref Account acc)
         {
-            acc = new Account() { username = username, password = password, displayname = username, rights = Rights.PLAYER, gender = Gender.Male };
+            acc = new Account() { username = username, password = password, displayname = "Player", rights = Rights.PLAYER, gender = Gender.Male };
 
             return LoginResponse.LOGIN_OK;
         }
@@ -81,7 +77,7 @@ namespace ServerEmulator.Core.Game
         public static void Save(Account a)
         {
             FileStream fs = new FileStream(ACCOUNT_PATH + a.username + ".xml", FileMode.Create);
-            serializer.Serialize(fs, a);
+            //serializer.Serialize(fs, a);
         }
 
 

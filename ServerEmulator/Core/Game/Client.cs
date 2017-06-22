@@ -1,7 +1,9 @@
 ﻿using ServerEmulator.Core;
+using ServerEmulator.Core.IO;
 using ServerEmulator.Core.Network;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading;
 
@@ -18,6 +20,7 @@ namespace ServerEmulator.Core.Game
         int x, y, z;
     }
 
+    //this is all super messy, will be fixed at some point
     class Client
     {
         private object _lock = new object();
@@ -42,25 +45,36 @@ namespace ServerEmulator.Core.Game
             this.acc = acc;
             Packets = new StaticPackets(con);
             localPLayer = new Player();
-
         }
 
 
-        public void UpdateEntities()
+        public byte[] UpdateEntities()
         {
-            List<bool> data = new List<bool>();
-
-            localPLayer.WritePlayerUpdate(ref data);
-            WriteLocalPlayers(ref data);
-            WritePlayerList(ref data);
+            MemoryStream ms = new MemoryStream();
 
 
+            List<bool> bits = new List<bool>();
+            localPLayer.WritePlayerMovement(ref bits);
+            WriteLocalPlayers(ref bits);
+            WritePlayerList(ref bits);
+            byte[] bitArray = bits.ToByteArray();
+
+            ms.Write(bitArray, 0, bitArray.Length);
+
+            localPLayer.WriteAppearance(ref ms);
+
+
+            byte[] output = new byte[ms.Length];
+
+            ms.Position = 0;
+            ms.Read(output, 0, output.Length);
+
+            return output;
         }
 
         public void WriteLocalPlayers(ref List<bool> data)
         {
             data.EncodeValue(8, 0);
-
         }
 
         //gender, headicon, bodyparts, idle animations
@@ -102,7 +116,10 @@ namespace ServerEmulator.Core.Game
             Packets.RunEnergy(100);
             Packets.SetConfig(172, 0);
             Packets.SendMessage(WELCOME_MSG);
-           // Packets.LoadRegion(p.RegionX, p.RegionY);
+            Packets.LoadRegion(localPLayer.RegionX, localPLayer.RegionY);
+
+            byte[] data = UpdateEntities();
+            Packets.PlayerUpdate(data);
         }
 
 

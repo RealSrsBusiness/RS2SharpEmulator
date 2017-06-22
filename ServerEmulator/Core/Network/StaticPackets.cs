@@ -53,7 +53,7 @@ namespace ServerEmulator.Core.Network
 
         public void PlayerUpdate(byte[] update)
         {
-            c.WriteOpCode(PLAYER_UPDATE);
+            c.WriteOpCodeVarSize(PLAYER_UPDATE, (short)(update.Length), false);
             c.Writer.BaseStream.Write(update, 0, update.Length);
         }      
 
