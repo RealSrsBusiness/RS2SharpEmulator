@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using static ServerEmulator.Core.Game.Client;
 
 namespace ServerEmulator.Core.Game
 {
@@ -26,7 +27,7 @@ namespace ServerEmulator.Core.Game
             DAMAGE = 0x20,
             DAMAGE2 = 0x200
         }
-        Queue<Point> walkingQueue = new Queue<Point>();
+        Queue<Coordinate> walkingQueue = new Queue<Coordinate>();
         UpdateMask updates = UpdateMask.APPEARANCE;
 
         public byte gender = 0, headicon = 0;
@@ -45,14 +46,21 @@ namespace ServerEmulator.Core.Game
             username = Extensions.StringToLong("Player");
         }
 
-        int x = 3200, y = 3200;
+        public int x = 3200, y = 3205;
+        //8x8 in size
         public ushort RegionX { get { return (ushort)(x >> 3); } }
         public ushort RegionY { get { return (ushort)(y >> 3); } }
+        byte localX { get { return (byte)(x - (RegionX - 6) * 8); } }
+        byte localY { get { return (byte)(y - (RegionY - 6) * 8); } }
+        //byte localX = 48, localY = 53; //48
 
-        int movedX, movedY;
-        int localX = 50, localY = 50;
+        Direction[] movement = new Direction[0];
+        int movementPos;
+
+        int movedX = 0, movedY = 0;
+        
         bool appearanceUpdate = true;
-        bool needLocalUpdate = true;
+        public bool needLocalUpdate = true;
         bool running = false;
         bool teleported = false;
 
@@ -73,27 +81,38 @@ namespace ServerEmulator.Core.Game
                 bits.EncodeValue(1, teleported ? 1 : 0);
                 bits.EncodeValue(1, appearanceUpdate ? 1 : 0);
 
-                bits.EncodeValue(7, localX);
                 bits.EncodeValue(7, localY);
+                bits.EncodeValue(7, localX);
             }
             else
             {
-                var direction = DirectionType(movedX, movedY);
-                bool moved = direction != -1;
+                //var direction = DirectionType(movedX, movedY);
+               // bool moved = direction != -1;
+
+                bool moved = movementPos < movement.Length;
+
                 if(moved)
                 {
+                    Direction direction = movement[movementPos];
+
+                    var coord = Client.directions[(int)direction];
+                    x += coord.x;
+                    y += coord.y;
+
+                    movementPos++;
+
                     didUpdate = true;
                     if(running)
                     {
                         bits.EncodeValue(2, 2); //type
-                        bits.EncodeValue(3, direction); //1st direction
-                        bits.EncodeValue(3, direction); //2nd dirction
+                        bits.EncodeValue(3, (int)direction); //1st direction
+                        bits.EncodeValue(3, (int)direction); //2nd dirction
                         bits.EncodeValue(1, appearanceUpdate ? 1 : 0);
                     }
                     else
                     {
                         bits.EncodeValue(2, 1); //type
-                        bits.EncodeValue(3, direction);
+                        bits.EncodeValue(3, (int)direction);
                         bits.EncodeValue(1, appearanceUpdate ? 1 : 0);
                     }
                 }
@@ -112,14 +131,24 @@ namespace ServerEmulator.Core.Game
                 bits[0] = true;
             }
 
-            appearanceUpdate = false;
             needLocalUpdate = false;
             movedX = 0;
             movedY = 0;
         }
 
+
+
+        public void SetMovement(Direction[] movementTypes)
+        {
+            movement = movementTypes;
+            movementPos = 0;
+        }
+
         public void WriteAppearance(ref MemoryStream ms)
         {
+            if (!appearanceUpdate)
+                return;
+
             RSStreamWriter sw = new RSStreamWriter(ms);
 
             int mask = 0x0;
@@ -132,7 +161,6 @@ namespace ServerEmulator.Core.Game
                 long startPos = sw.BaseStream.Position;
                 sw.WriteNegatedByte(0); //lenght
 
-    
                 sw.WriteByte(gender);
                 sw.WriteByte(headicon);
 
@@ -168,12 +196,13 @@ namespace ServerEmulator.Core.Game
                 sw.WriteShort(TotalSkill);
 
                 long endPos = sw.BaseStream.Position;
-                byte size = (byte)(endPos - startPos);
+                byte size = (byte)(endPos - startPos - 1);
                 sw.BaseStream.Position = startPos;
-                sw.WriteNegatedByte(size - 1);
+                sw.WriteNegatedByte(size);
                 sw.BaseStream.Position = endPos;
             }
 
+            appearanceUpdate = false;
             updates = UpdateMask.NONE;
         }
 

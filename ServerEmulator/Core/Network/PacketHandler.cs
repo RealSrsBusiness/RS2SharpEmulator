@@ -1,4 +1,5 @@
 ﻿using ServerEmulator.Core.Game;
+using ServerEmulator.Core.IO;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,7 +12,8 @@ namespace ServerEmulator.Core.Network
     class PacketHandler
     {
         Connection c;
-        Client client;   
+        Client client;
+        RSStreamReader reader;
                
         Action[] handles;
         int dataLeft = -1;
@@ -28,6 +30,7 @@ namespace ServerEmulator.Core.Network
             handles[WALK_ON_COMMAND] = WalkCMD;
             handles[INTF_ACTION_BTN] = ActionButton;
             handles[CHAT_MSG_SEND] = ChatMessage;
+            handles[MOUSE_CLICK] = MouseClick;
 
             for (int i = 0; i < handles.Length; i++)
             {
@@ -37,6 +40,13 @@ namespace ServerEmulator.Core.Network
                     handles[i] = () => { Program.Debug("Unhandled Packet {0}", j); };
                 }
             }
+
+            reader = c.Reader;
+        }
+
+        private void MouseClick()
+        {
+           // Program.Debug("Mouseclick");
         }
 
         public void Handle(byte opCode, bool firstByte)
@@ -68,9 +78,46 @@ namespace ServerEmulator.Core.Network
             Program.Debug("Chat msg");
         }
 
+
+        private void Walk()
+        {
+            int count = (int)((reader.BaseStream.Length - 5) / 2);
+            int[] xs = new int[count];
+            int[] ys = new int[count];
+
+            short x = (short)reader.ReadLEShortA();
+            for (int i = 0; i < count; i++)
+            {
+                xs[i] = x + reader.ReadByte();
+                ys[i] = reader.ReadByte();
+            }
+            short y = (short)reader.ReadLEShort();
+
+            Coordinate[] waypoints = new Coordinate[count + 1];
+            waypoints[0] = new Coordinate() { x = x, y = y };
+
+            for (int i = 1; i < waypoints.Length; i++)
+            {
+                var wp = new Coordinate();
+                wp.x = xs[i - 1];
+                wp.y = ys[i - 1] + y;
+                waypoints[i] = wp;
+            }
+
+            sbyte keyStat = reader.ReadNegByte();
+            client.SetMovement(waypoints);
+
+            Program.Debug("Walking screen ");
+        }
+
+        private void MinimapWalk()
+        {
+            Program.Debug("Walking minimap");
+        }
+
         private void WalkCMD()
         {
-            Program.Debug("Walking");
+            Program.Debug("Walking cmd");
         }
 
         private void ActionButton()
@@ -80,18 +127,7 @@ namespace ServerEmulator.Core.Network
 
         private void Idle()
         {
-            Program.Debug("Idling...");
+           // Program.Debug("Idling...");
         }
-
-        private void Walk()
-        {
-            Program.Debug("Walking Packet");
-        }
-
-        private void MinimapWalk()
-        {
-            Program.Debug("Minimap Packet");
-        }
-
     }
 }

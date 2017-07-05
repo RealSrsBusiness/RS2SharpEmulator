@@ -69,6 +69,7 @@
     <Folder Include="Content\Minigames\" />
     <Folder Include="Content\Quests\" />
     <Folder Include="Content\Skills\" />
+    <Folder Include="Utilities\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

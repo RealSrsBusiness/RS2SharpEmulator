@@ -14,7 +14,7 @@ namespace ServerEmulator.Core
     internal class Processor
     {
         Thread clientAcceptor, gameProcessing;
-        List<Connection> connections = new List<Connection>(MAX_CONNECTIONS);
+        List<Connection> unconfirmedCons = new List<Connection>(MAX_CONNECTIONS);
         List<Client> clients = new List<Client>(MAX_PLAYER);
         Socket listener;
 
@@ -39,6 +39,14 @@ namespace ServerEmulator.Core
             }
         }
 
+        public void UnregisterClient(Client client)
+        {
+            lock (_lockObj)
+            {
+                clients.Remove(client);
+            }
+        }
+
         void ScheduleUpdate()
         {
 
@@ -53,12 +61,15 @@ namespace ServerEmulator.Core
 
                 //do all queries and build all delegates that command the server to send out the packages (?)
 
-                for (int i = 0; i < clients.Count; i++)
+                lock(_lockObj)//lock might be too long, maybe use queue?
                 {
-                    Client client = clients[i];
-                    if(client.Update())
-                        client.Flush();
+                    for (int i = 0; i < clients.Count; i++)
+                    {
+                        Client client = clients[i];
+                        client.Update();
+                    }
                 }
+                
 
                 //raise events
 
@@ -100,8 +111,9 @@ namespace ServerEmulator.Core
             remoteHost.NoDelay = true;
             Connection c = new Connection(remoteHost);
             c.onDisconnect += Disconnect_Client;
-            connections.Add(c);
+            unconfirmedCons.Add(c);
             c.handle = new LoginHandler(c).Handle;
+            //todo, check if ip is banned before receiving, if so, let connection time out
             c.ReceiveData(2);
             Program.Log("New Client has been connected {0}", c.EndPoint);
             listener.BeginAccept(Accept_Client, null);
@@ -109,7 +121,8 @@ namespace ServerEmulator.Core
 
         void Disconnect_Client(Connection c)
         {
-            connections.Remove(c);
+            unconfirmedCons.Remove(c);
+            clients.RemoveAll(client => client.Con == c);
             Program.Log("Connection lost {0}", c.EndPoint);
         }
     }

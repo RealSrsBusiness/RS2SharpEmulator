@@ -17,6 +17,7 @@ namespace ServerEmulator.Core
         public const string SERVER_NAME = "C# Server Emulator";
         public const string WELCOME_MSG = "Welcome to " + SERVER_NAME;
         public const int SPAWN_X = 3200, SPAWN_Y = 3200;
+        public const bool VERIFY_WORLDMAP = false;
 
         public const string DATA_PATH = "data\\";
         public const string PLUGIN_PATH = DATA_PATH + "plugins\\";
@@ -213,12 +214,12 @@ namespace ServerEmulator.Core
             public const byte ITEM_UNEQUIP = 145;
             public const byte ITEM_LIGHT = 79;
 
-            public const byte ITEM_OPT_1 = 122;
+            public const byte ITEM_OPT_1 = 122; //these seem wrong? --start
             public const byte ITEM_OPT_2 = 16;
             public const byte ITEM_OPT_3 = 75;
 
             public const byte ITEM_MOVE = 214;
-            public const byte ITEM_DROP = 87;
+            public const byte ITEM_DROP = 87; //--end
 
             public const byte ITEM_BANK_5 = 117;
             public const byte ITEM_BANK_10 = 43;
@@ -290,6 +291,7 @@ namespace ServerEmulator.Core
             public const byte WINDOW_FOCUS = 3;
             public const byte MOUSE_CLICK = 241;
             public const byte CAMERA_MOVE = 86;
+            public const byte CAMERA_VALIDATE = 77; //anti-cheat?
 
             public const byte ANTI_CHEAT2 = 85;
             public const byte ANTI_CHEAT3 = 136;

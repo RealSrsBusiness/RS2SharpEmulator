@@ -26,7 +26,7 @@ namespace ServerEmulator.Core.Game
 
     enum Gender : sbyte //*triggered*
     {
-        None = -1, Male = 0, Female = 1
+        NOT_SET = -1, MALE = 0, FEMALE = 1
     }
 
     class Account
@@ -41,7 +41,7 @@ namespace ServerEmulator.Core.Game
         public Rights rights;
         public Gender gender;
 
-        public int x = 3222, y = 3222, z = 0;
+        public int x = 3200, y = 3200, z = 0;
         public int energy = 100; //special attack?
         public int[] equipment = new int[14];
         public int[] playerLook = new int[6];
@@ -55,7 +55,7 @@ namespace ServerEmulator.Core.Game
 
         private Account() { }
 
-        public static void Create(string username, string password, Rights rights = Rights.PLAYER)
+        public static Account Create(string username, string password, Rights rights = Rights.PLAYER)
         {
             Account a = new Account()
             {
@@ -63,23 +63,28 @@ namespace ServerEmulator.Core.Game
                 password = password,
                 registerDate = DateTime.Now,
                 lastLogin = DateTime.MinValue,
-                rights = Rights.PLAYER,
+                rights = rights,
             };
+            return a;
         }
 
-        public static sbyte Load(string username, string password, ref Account acc)
+        public static Account Load(string username, string password, out sbyte response)
         {
-            acc = new Account() { username = username, password = password, displayname = "Player", rights = Rights.PLAYER, gender = Gender.Male };
+            Account a = Create(username, password, Rights.ADMIN);
+            a.displayname = "Player";
+            a.gender = Gender.MALE;
 
-            return LoginResponse.LOGIN_OK;
+            response = LoginResponse.LOGIN_OK;
+
+            return a;
         }
+
 
         public static void Save(Account a)
         {
             FileStream fs = new FileStream(ACCOUNT_PATH + a.username + ".xml", FileMode.Create);
             //serializer.Serialize(fs, a);
         }
-
 
         public bool IsMuted { get { return false; } }
         public bool IsBanned { get { return false; } }

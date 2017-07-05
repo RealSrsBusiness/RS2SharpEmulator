@@ -8,4 +8,5 @@ namespace ServerEmulator.Core.Game
     {
         void Load();
     }
+
 }

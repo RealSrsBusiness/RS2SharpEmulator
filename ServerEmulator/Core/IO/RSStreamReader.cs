@@ -89,9 +89,9 @@ namespace ServerEmulator.Core.IO
                 ((ReadByte() & 0xff) << 24) + ((ReadByte() & 0xff) << 16);
         }
 
-        public byte ReadNegByte()
+        public sbyte ReadNegByte()
         {
-            return (byte)-ReadByte();
+            return (sbyte)-ReadByte();
         }
 
         public int ReadNegUByte()

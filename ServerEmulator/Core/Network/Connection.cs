@@ -13,8 +13,8 @@ namespace ServerEmulator.Core.Network
     class Connection : IDisposable
     {
         Socket host; //remote host
-        Timer timeout;
-        public ConnectionUpdate onDisconnect;
+        Timer healthTimer; //check for connection lost, valid data received, too much data received
+        public event ConnectionUpdate onDisconnect;
         public PacketHandle handle { get; set; }
 
         public RSStreamReader Reader { get; private set; } //allows reading from the stream
@@ -32,13 +32,13 @@ namespace ServerEmulator.Core.Network
             EndPoint = host.RemoteEndPoint.ToString();
             Reader = new RSStreamReader(new MemoryStream());
             Writer = new RSStreamWriter(new MemoryStream());
-            timeout = new Timer(2500);
-            timeout.Elapsed += Timeout_Elapsed;
+            healthTimer = new Timer(2500);
+            healthTimer.Elapsed += Timeout_Elapsed;
         }
 
         private void Timeout_Elapsed(object sender, ElapsedEventArgs e)
         {
-            timeout.Stop();
+            healthTimer.Stop();
             Dispose();
         }
 
@@ -142,8 +142,8 @@ namespace ServerEmulator.Core.Network
 
         public void Dispose()
         {
-            timeout.Stop();
-            timeout.Dispose();
+            healthTimer.Stop();
+            healthTimer.Dispose();
             host.Close();
             onDisconnect(this);
         }

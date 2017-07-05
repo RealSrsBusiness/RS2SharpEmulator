@@ -230,11 +230,11 @@ namespace ServerEmulator.Core
 
             for (int i = 0; i < ts.Length; i++)
             {
-                ts[i] = new System.Timers.Timer(5000);
+                ts[i] = new System.Timers.Timer(3000);
                 ts[i].Elapsed += Program_Elapsed;
                 ts[i].Start();
 
-                ts[i].Stop();
+               // ts[i].Stop();
             }
 
             sw.Stop();
@@ -243,11 +243,17 @@ namespace ServerEmulator.Core
 
         }
 
+        static int lolLevel = 0;
+
         private static void Program_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            Program.Debug("Elapsed");
-            System.Timers.Timer t = sender as System.Timers.Timer;
-            t.Stop();
+            lolLevel++;
+            if (lolLevel >= 9000)
+            {
+                Program.Log("lol");
+                lolLevel = 0;
+            }
+            //t.Stop();
         }
 
         private static void T_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -263,6 +269,90 @@ namespace ServerEmulator.Core
 
         static Stopwatch sw = new Stopwatch();
 
+        class ThreadTest
+        {
+            private readonly object _locker = new object();
+
+            public void start()
+            {
+                Thread tt1 = new Thread(t1);
+                Thread tt2 = new Thread(t2);
+
+                tt1.Start();
+                Thread.Sleep(100);
+                tt2.Start();
+
+            }
+
+            public void t1()
+            {
+                lock(_locker)
+                {
+                    for (int i = 0; i < 1000; i++)
+                    {
+                        Console.WriteLine("lul" + i);
+                        Thread.Sleep(10);
+                    }
+                }
+            }
+            
+
+            public void t2()
+            {
+                lock(_locker)
+                {
+                    for (int i = 0; i < 1000; i++)
+                    {
+                        Console.WriteLine("lolol" + i);
+                        Thread.Sleep(10);
+                    }
+                }
+            }
+
+        }
+
+        class tt2
+        {
+            private ManualResetEvent mre = new ManualResetEvent(false);
+
+            public void start()
+            {
+                Thread tt1 = new Thread(t1);
+                Thread tt2 = new Thread(t2);
+
+                tt1.Start();
+                Thread.Sleep(100);
+                tt2.Start();
+
+            }
+
+            public void t1()
+            {
+                
+                for (int i = 0; i < 1000; i++)
+                {
+                        Console.WriteLine("lul" + i);
+                        Thread.Sleep(10);
+                }
+
+                mre.Set();
+                
+            }
+
+
+            public void t2()
+            {
+                mre.WaitOne();
+
+                for (int i = 0; i < 1000; i++)
+                {
+                    Console.WriteLine("lolol" + i);
+                    Thread.Sleep(10);
+                }
+            }
+        }
+
+
         static void Main(string[] args)
         {
             Console.Title = "Server Emulator Rev #" + Constants.SERVER_REV;
@@ -273,10 +363,13 @@ namespace ServerEmulator.Core
                 Program.Log("Created content folder.");
             }
 
+           // new tt2().start();
+
 
             Processor = new Processor();
             Processor.Start();
-   
+
+           // p6();
 
             //PerformanceTest();
             //Performance2();
@@ -356,6 +449,8 @@ namespace ServerEmulator.Core
          * rollback <player> <id>
          * 
          * */
+
+        //higher rev implementations: a* pathfinding, xtea map files, "onExamine" packet 
 
     }
 }

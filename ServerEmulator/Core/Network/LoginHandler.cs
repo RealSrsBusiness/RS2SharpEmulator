@@ -3,7 +3,7 @@ using ServerEmulator.Core.IO;
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using System.Threading;
 using static ServerEmulator.Core.Constants.LoginResponse;
 
 namespace ServerEmulator.Core.Network
@@ -12,8 +12,6 @@ namespace ServerEmulator.Core.Network
     {
         INIT, SIZE, HANDSHAKE
     }
-
-    internal delegate void Response(sbyte response, Client client);
 
     class LoginHandler
     {
@@ -79,7 +77,7 @@ namespace ServerEmulator.Core.Network
                     crcs[i] = c.Reader.ReadInt();
 
                 byte sizeLeft = c.Reader.ReadByteAsUByte();
-                byte delimitter = c.Reader.ReadByteAsUByte(); //10
+                byte magicRsaNumber = c.Reader.ReadByteAsUByte(); //10
 
                 int[] isaacSeed = new int[4];
                 for (int i = 0; i < isaacSeed.Length; i++)
@@ -99,27 +97,26 @@ namespace ServerEmulator.Core.Network
 
                 bool allRead = c.Reader.BaseStream.Position == c.Reader.BaseStream.Length;
 
-
-                Account acc = null;
-                var response = Account.Load(username, password, ref acc);
+                sbyte response = -1;
+                Account acc = Account.Load(username, password, out response);
                 c.Writer.WriteByte(response);
+
                 if(response == LOGIN_OK)
                 {
                     c.Writer.WriteByte((byte)acc.rights);
                     c.Writer.WriteByte(acc.flagged ? 1 : 0);
-                    
+                    c.Send();
 
                     Client client = new Client(c, acc);
-                    client.InitData();
                     c.handle = new PacketHandler(client).Handle;
-                    c.ReceiveData();
+                    c.ReceiveData(); //receive first opcode
+                    Program.Processor.RegisterClient(client);
                 }
                 else
                 {
+                    c.Send();
                     c.Dispose();
                 }
-
-                c.Send();
             }   
 
         }
