@@ -1,4 +1,5 @@
 ﻿using ServerEmulator.Core;
+using ServerEmulator.Core.Game;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,10 +9,13 @@ using System.Threading;
 
 namespace ServerEmulator.Core
 {
+    /// <summary>
+    /// Controls the server and loads and saves settings
+    /// </summary>
     internal class Program
     {
         public static Processor Processor { get; private set; }
-        const bool DEBUG = true;
+        static bool DEBUG = false;
 
         static void PerformanceTest()
         {
@@ -111,8 +115,9 @@ namespace ServerEmulator.Core
 
         struct Tile
         {
-           // public HashSet<Entitiy> entities;
+            public HashSet<Entitiy> entities;
             public byte CollisionMap;
+
             //public object[] obs;
 
         }
@@ -352,38 +357,156 @@ namespace ServerEmulator.Core
             }
         }
 
+        partial class Clienta
+        {
+            public object[] states = new object[1000];
+            ItemStack[] inventory = new ItemStack[28];
+
+            public object this[int i] { get{ return states[i]; } }
+
+            public Clienta()
+            {
+                states[5] = new WCContext() { axeTier = 5 };
+                inventory[20] = new ItemStack() { id = 4 };
+                axeTier = 5;
+            }
+
+            public T GetState<T>(int index)
+            {
+                return (T)states[index];
+            }
+
+            public object GetState2(int index)
+            {
+                return states[index];
+            }
+
+            public bool HasItem(int id)
+            {
+                for (int i = 0; i < inventory.Length; i++)
+                    if (inventory[i].id == id)
+                        return true;
+                return false;
+            }
+        }
+
+        partial class Clienta
+        {
+            public int axeTier;
+        }
+
+        struct WCContext
+        {
+            public int axeTier;
+        }
+
+        public static class ContextPTest
+        {
+            public static void Run()
+            {
+                Stopwatch sw = new Stopwatch();
+                Clienta c = new Clienta();
+
+                int[] axes = new int[] { 1, 2, 3, 4, 5 };
+
+
+                sw.Start();
+
+                for (int i = 0; i < 10000000; i++) //~280ms
+                {
+                    // WCContext cxt = c.GetState<WCContext>(5);
+                    for (int j = 0; j < 3; j++)
+                    {
+                        //WCContext cxt = (WCContext)c[5];
+
+                        WCContext cxt = (WCContext)c.GetState2(5); //non generic version is even faster
+                        int res = cxt.axeTier;
+                    }
+                    
+                }
+
+                sw.Stop();
+
+                Program.Debug("Res: {0}", sw.ElapsedMilliseconds);
+                sw.Reset();
+
+
+                sw.Start();
+                for (int i = 0; i < 10000000; i++) //~280ms
+                {
+                    // WCContext cxt = c.GetState<WCContext>(5);
+                    int cxt = c.axeTier; //non generic version is even faster
+                    int res = cxt;
+                }
+                sw.Stop();
+                Program.Debug("Res: {0}", sw.ElapsedMilliseconds);
+                sw.Reset();
+
+                sw.Start();
+
+                for (int i = 0; i < 10000000; i++)
+                {
+                    int tier = 0;
+                    for (int j = 0; j < axes.Length; j++)
+                    {
+                        if(c.HasItem(axes[j]))
+                        {
+                            tier = j;
+                            break;
+                        }
+                    }
+                    int res = tier;
+                }
+
+                sw.Stop();
+
+                Program.Debug("Res: {0}", sw.ElapsedMilliseconds);
+            }
+
+        }
 
         static void Main(string[] args)
         {
             Console.Title = "Server Emulator Rev #" + Constants.SERVER_REV;
 
+            for (int i = 0; i < args.Length; i++)
+            {
+                string p = args[i].ToLower();
+                if(p.Equals("debug"))
+                    DEBUG = true;
+            }
+
+#if DEBUG
+                DEBUG = true;
+#endif
+
+            if (Debugger.IsAttached && !DEBUG)
+                return;
+            
+
             if(!Directory.Exists(Constants.DATA_PATH))
             {
                 Directory.CreateDirectory(Constants.DATA_PATH);
-                Program.Log("Created content folder.");
+                Program.Log("Content folder created.");
             }
-
-           // new tt2().start();
 
 
             Processor = new Processor();
             Processor.Start();
 
-           // p6();
-
-            //PerformanceTest();
-            //Performance2();
-
-
             Log("Server successfully initialized");
 
-            while(Processor.Runnning)
+            while(Processor.Running)
             {
                 string cmd = Console.ReadLine().ToLower();
                 switch(cmd)
                 {
                     case "exit":
                         Shutdown("Server shutdown by command.", false);
+                        break;
+
+                    case "help":
+                        Console.WriteLine("Commands: exit, help.");
                         break;
 
                     default: Log("Unrecognized command, type 'help' for a list of commands.");
@@ -427,7 +550,7 @@ namespace ServerEmulator.Core
         /*
          * Server commands:
          * status = shows the status including listening port and bound socket; connected clients
-         * online = lists online player
+         * online = lists online players
          * count = number of players online
          * save = saves all players
          * restart = saves all players, disconnects them and restarts the server

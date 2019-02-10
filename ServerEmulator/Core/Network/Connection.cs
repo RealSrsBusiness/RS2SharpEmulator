@@ -9,11 +9,11 @@ namespace ServerEmulator.Core.Network
     delegate void ConnectionUpdate(Connection c);
     delegate void PacketHandle(byte opCode, bool firstByte);
 
-    //toadd: encryption, connection timeout, limit login tries?
+    //toadd: encryption, connection timeout, limit login tries? disconnect when too much data is sent (ddos protection)
+    //check for connection lost, valid data received, too much data received (put on a timer?)
     class Connection : IDisposable
     {
         Socket host; //remote host
-        Timer healthTimer; //check for connection lost, valid data received, too much data received
         public event ConnectionUpdate onDisconnect;
         public PacketHandle handle { get; set; }
 
@@ -29,22 +29,12 @@ namespace ServerEmulator.Core.Network
         public Connection(Socket host)
         {
             this.host = host;
+            this.host.NoDelay = true;
             EndPoint = host.RemoteEndPoint.ToString();
             Reader = new RSStreamReader(new MemoryStream());
             Writer = new RSStreamWriter(new MemoryStream());
-            healthTimer = new Timer(2500);
-            healthTimer.Elapsed += Timeout_Elapsed;
         }
 
-        private void Timeout_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            healthTimer.Stop();
-            Dispose();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="expectedData">How much data to expect, -1 means an OpCode is expected</param>
         public void ReceiveData(int expectedData = -1)
         {
@@ -109,13 +99,28 @@ namespace ServerEmulator.Core.Network
             Writer.WriteByte((byte)(opCode + outRng.Next()));;
         }
 
-        public void WriteOpCodeVarSize(byte opCode, short payloadSize, bool singleByte = true)
+        public int WriteOpCodeVar(byte opcode, byte reserveBytes = 1)
         {
-            WriteOpCode(opCode);
-            if (singleByte)
-                Writer.WriteByte(payloadSize);
+            WriteOpCode(opcode);
+            for (int i = 0; i < reserveBytes; i++)
+                Writer.WriteByte(0);
+            return (int)Writer.BaseStream.Length;
+        }
+
+        public void FinishVarPacket(int startPos, byte reservedBytes = 1)
+        {
+            var endPos = Writer.BaseStream.Length;
+            var packetSize = (int)(endPos - startPos);
+            Writer.BaseStream.Position = startPos - reservedBytes;
+
+            if (reservedBytes == 1)
+                Writer.WriteByte(packetSize);
+            else if (reservedBytes == 2)
+                Writer.WriteShort(packetSize);
             else
-                Writer.WriteShort(payloadSize);
+                throw new NotSupportedException();
+
+            Writer.BaseStream.Position = endPos;
         }
 
         /// <summary>
@@ -142,9 +147,9 @@ namespace ServerEmulator.Core.Network
 
         public void Dispose()
         {
-            healthTimer.Stop();
-            healthTimer.Dispose();
-            host.Close();
+            Reader.BaseStream.Dispose();
+            Writer.BaseStream.Dispose();
+            host.Dispose();
             onDisconnect(this);
         }
 

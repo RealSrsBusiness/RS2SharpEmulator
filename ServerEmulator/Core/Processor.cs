@@ -14,16 +14,19 @@ namespace ServerEmulator.Core
     internal class Processor
     {
         Thread clientAcceptor, gameProcessing;
-        List<Connection> unconfirmedCons = new List<Connection>(MAX_CONNECTIONS);
-        List<Client> clients = new List<Client>(MAX_PLAYER);
+        List<Connection> connections = new List<Connection>(MAX_CONNECTIONS);
+        List<Client> establishedClients = new List<Client>(MAX_PLAYER);
         Socket listener;
 
         private int delayedTicks;
         private object _lockObj = new object();
-        public bool Runnning { get; set; } = true;
+        public bool Running { get; set; }
 
         public void Start()
         {
+            Running = true;
+            World.Init();
+
             clientAcceptor = new Thread(SocketListener);
             gameProcessing = new Thread(GameLoop);
 
@@ -31,47 +34,22 @@ namespace ServerEmulator.Core
             clientAcceptor.Start();
         }
 
-        public void RegisterClient(Client client)
-        {
-            lock(_lockObj)
-            {
-                clients.Add(client);
-            }
-        }
-
-        public void UnregisterClient(Client client)
-        {
-            lock (_lockObj)
-            {
-                clients.Remove(client);
-            }
-        }
-
-        void ScheduleUpdate()
-        {
-
-        }
-
         void GameLoop()
         {
             Stopwatch sw = new Stopwatch();
-            while (Runnning)
+            while (Running)
             {
                 sw.Start();
 
-                //do all queries and build all delegates that command the server to send out the packages (?)
+                //update all entities (actions, movement of players, npcs etc) and build packages
+                World.ProcessWorld();
 
-                lock(_lockObj)//lock might be too long, maybe use queue?
+                //update what all the clients see and send out packages
+                for (int i = 0; i < establishedClients.Count; i++)
                 {
-                    for (int i = 0; i < clients.Count; i++)
-                    {
-                        Client client = clients[i];
-                        client.Update();
-                    }
+                    Client client = establishedClients[i];
+                    client.UpdateScreen();
                 }
-                
-
-                //raise events
 
                 sw.Stop();
                 int remainingSleep = CYCLE_TIME - (int)sw.ElapsedMilliseconds;
@@ -88,6 +66,27 @@ namespace ServerEmulator.Core
             }
         }
 
+        public void RegisterClient(Client client)
+        {
+            lock (_lockObj)
+            {
+                establishedClients.Add(client);
+            }
+        }
+
+        public void UnregisterClient(Client client)
+        {
+            lock (_lockObj)
+            {
+                establishedClients.Remove(client);
+            }
+        }
+
+        void ScheduleUpdate()
+        {
+
+        }
+
         void SocketListener()
         {
             try
@@ -95,7 +94,7 @@ namespace ServerEmulator.Core
                 listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 listener.Bind(new IPEndPoint(IPAddress.Any, PORT));
                 listener.NoDelay = true;
-                listener.Listen(100);
+                listener.Listen(20);
                 listener.BeginAccept(Accept_Client, null);
                 Program.Log("Listening on Port {0}", PORT);
             }
@@ -107,22 +106,20 @@ namespace ServerEmulator.Core
 
         void Accept_Client(IAsyncResult ar)
         {
-            Socket remoteHost = listener.EndAccept(ar);
-            remoteHost.NoDelay = true;
-            Connection c = new Connection(remoteHost);
-            c.onDisconnect += Disconnect_Client;
-            unconfirmedCons.Add(c);
-            c.handle = new LoginHandler(c).Handle;
-            //todo, check if ip is banned before receiving, if so, let connection time out
-            c.ReceiveData(2);
-            Program.Log("New Client has been connected {0}", c.EndPoint);
+            Connection host = new Connection(listener.EndAccept(ar));
+            host.onDisconnect += Disconnect_Client;
+            host.handle = new LoginHandler(host).Handle;
+            host.ReceiveData(2); //todo, check if ip is banned before receiving, if so, let connection time out
+
+            connections.Add(host);
+            Program.Log("New Client has been connected {0}", host.EndPoint);
             listener.BeginAccept(Accept_Client, null);
         }
 
         void Disconnect_Client(Connection c)
         {
-            unconfirmedCons.Remove(c);
-            clients.RemoveAll(client => client.Con == c);
+            connections.Remove(c);
+            establishedClients.RemoveAll(client => client.Con == c);
             Program.Log("Connection lost {0}", c.EndPoint);
         }
     }

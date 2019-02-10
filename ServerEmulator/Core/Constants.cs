@@ -17,7 +17,7 @@ namespace ServerEmulator.Core
         public const string SERVER_NAME = "C# Server Emulator";
         public const string WELCOME_MSG = "Welcome to " + SERVER_NAME;
         public const int SPAWN_X = 3200, SPAWN_Y = 3200;
-        public const bool VERIFY_WORLDMAP = false;
+        public const bool VERIFY_COLLISIONS = false, PRELOAD_MAP = false;
 
         public const string DATA_PATH = "data\\";
         public const string PLUGIN_PATH = DATA_PATH + "plugins\\";
@@ -136,9 +136,9 @@ namespace ServerEmulator.Core
             public const byte CHAT_PRIVATE = 196;
 
             public const byte ITEM_ALL_CLEAR = 72; //clear inventory
-            public const byte ITEM_SET = 34;
-            public const byte ITEM_SIZE = 53;
-
+            public const byte ITEM_SET = 53;
+            public const byte ITEM_SLOT_SET = 34;
+            
             public const byte ANIM_ALL_RESET = 1;
             public const byte ANIM_SET = 4;
             public const byte MULTICOMBAT = 61;
@@ -212,14 +212,13 @@ namespace ServerEmulator.Core
             //items
             public const byte ITEM_EQUIP = 41;
             public const byte ITEM_UNEQUIP = 145;
-            public const byte ITEM_LIGHT = 79;
 
-            public const byte ITEM_OPT_1 = 122; //these seem wrong? --start
+            public const byte ITEM_OPT_1 = 122;
             public const byte ITEM_OPT_2 = 16;
             public const byte ITEM_OPT_3 = 75;
 
             public const byte ITEM_MOVE = 214;
-            public const byte ITEM_DROP = 87; //--end
+            public const byte ITEM_DROP = 87;
 
             public const byte ITEM_BANK_5 = 117;
             public const byte ITEM_BANK_10 = 43;
@@ -228,6 +227,7 @@ namespace ServerEmulator.Core
             public const byte ITEM_BANK_ALL = 129;
 
             public const byte FLOORITEM_OPT_1 = 253;
+            public const byte FLOORITEM_LIGHT = 79;
             public const byte FLOORITEM_PICKUP = 236;
 
             //objects
@@ -244,11 +244,12 @@ namespace ServerEmulator.Core
             public const byte NPC_OPT_4 = 18;
 
             //player
-            public const byte PLAYER_ATT = 73;
-            public const byte PLAYER_FOLLOW = 39;
-            public const byte PLAYER_TRADE = 139;
-            public const byte PLAYER_MODERATE = 153;
-
+            public const byte PLAYER_OPT_1 = 128;
+            public const byte PLAYER_OPT_2 = 153;
+            public const byte PLAYER_OPT_3 = 73;
+            public const byte PLAYER_OPT_4 = 139;
+            public const byte PLAYER_OPT_5 = 39;
+            
             //hud
             public const byte CHAT_MSG_SEND = 4;
             public const byte CHAT_CMD_SEND = 103;
@@ -257,13 +258,11 @@ namespace ServerEmulator.Core
 
             public const byte INTF_CONTINUE = 40;
             public const byte INTF_TYPING = 60;
-            public const byte INTF_CLOSE = 130;
+            public const byte INTF_CHANGE = 130;
             public const byte INTF_ACTION_BTN = 185;
             public const byte INTF_CHARACTER_DESIGN = 101;
 
             public const byte PLAYER_REPORT = 218;
-            public const byte PLAYER_CHALENGE_ACCEPT = 128;
-
             public const byte FRIEND_ADD = 188;
             public const byte FRIEND_DELETE = 215;
 

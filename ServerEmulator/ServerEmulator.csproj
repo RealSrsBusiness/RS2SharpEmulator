@@ -31,6 +31,8 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -38,19 +40,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Content\Skills\Test.cs" />
     <Compile Include="Core\Constants.cs" />
     <Compile Include="Core\Extensions.cs" />
+    <Compile Include="Core\Game\Types\SimpleAbstracts.cs" />
+    <Compile Include="Core\Game\DataLoader.cs" />
+    <Compile Include="Core\Game\Types\Definitions.cs" />
     <Compile Include="Core\Game\IContent.cs" />
+    <Compile Include="Core\Game\Types\Entities.cs" />
+    <Compile Include="Core\Game\Types\Movement.cs" />
+    <Compile Include="Core\Network\EntityUpdates.cs" />
     <Compile Include="Core\Processor.cs" />
     <Compile Include="Core\Game\Client.cs" />
-    <Compile Include="Core\Game\Account.cs" />
-    <Compile Include="Core\Game\Entities\GameObject.cs" />
-    <Compile Include="Core\Game\Entities\Item.cs" />
-    <Compile Include="Core\Game\Entities\Player.cs" />
-    <Compile Include="Core\Game\Entities\NPC.cs" />
-    <Compile Include="Core\Game\Map\Region.cs" />
-    <Compile Include="Core\Game\Map\Tile.cs" />
-    <Compile Include="Core\Game\Map\World.cs" />
+    <Compile Include="Core\Game\Types\Account.cs" />
+    <Compile Include="Core\Game\World.cs" />
     <Compile Include="Core\IO\ISAACRng.cs" />
     <Compile Include="Core\IO\RSStreamReader.cs" />
     <Compile Include="Core\IO\RSStreamWriter.cs" />
@@ -68,7 +71,6 @@
     <Folder Include="Content\Bosses\" />
     <Folder Include="Content\Minigames\" />
     <Folder Include="Content\Quests\" />
-    <Folder Include="Content\Skills\" />
     <Folder Include="Utilities\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

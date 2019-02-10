@@ -24,11 +24,19 @@ namespace ServerEmulator.Core.Game
         PLAYER = 0, MODERATOR = 1, ADMIN = 2
     }
 
-    enum Gender : sbyte //*triggered*
+    enum Gender : sbyte
     {
         NOT_SET = -1, MALE = 0, FEMALE = 1
     }
 
+    struct Friend //todo: categories
+    {
+        public int userId;
+        public string alias;
+        public bool blocked;
+    }
+
+    [Serializable]
     class Account
     {
         //static XmlSerializer serializer = new XmlSerializer(typeof(Account));
@@ -37,45 +45,43 @@ namespace ServerEmulator.Core.Game
         string email, username, password, displayname, lastIp;
         DateTime registerDate, lastLogin, membership, mutedUntil, bannedUntil;
         public int gameTime; //time spent online in seconds
-        public bool flagged;
+        public bool flagged; //flagged for cheating
         public Rights rights;
-        public Gender gender;
+        public Gender gender = Gender.NOT_SET;
 
-        public int x = 3200, y = 3200, z = 0;
+        public int x = SPAWN_X, y = SPAWN_Y, z = 0;
         public int energy = 100; //special attack?
-        public int[] equipment = new int[14];
+        public int[] equipment = new int[11];
         public int[] playerLook = new int[6];
 
-        public Skill[] skill = new Skill[21]; //contains prayer, hp etc.
-        public ItemStack[] inventory = new ItemStack[28];
+        public Skill[] skills = new Skill[21]; //contains prayer, hp etc.
         public ItemStack[] bank = new ItemStack[300];
-        public string[] friends = new string[200];
-        public string[] ignores = new string[100];       
+        public ItemStack[] inventory = new ItemStack[28];
+        
+        public Friend[] friends = new Friend[250];
+        public string[] recentNames = new string[10];
 
-
-        private Account() { }
-
-        public static Account Create(string username, string password, Rights rights = Rights.PLAYER)
+        public Account(string username, string displayname, string password, Rights rights = Rights.PLAYER)
         {
-            Account a = new Account()
+            this.username = username;
+            this.password = password;
+            this.registerDate = DateTime.Now;
+            this.lastLogin = DateTime.MinValue;
+            this.rights = rights;
+            
+            for (int i = 0; i < skills.Length; i++)
             {
-                username = username,
-                password = password,
-                registerDate = DateTime.Now,
-                lastLogin = DateTime.MinValue,
-                rights = rights,
-            };
-            return a;
+                Skill s = new Skill() { level = 50, xp = 105000 };
+                skills[i] = s;
+            }
         }
 
         public static Account Load(string username, string password, out sbyte response)
         {
-            Account a = Create(username, password, Rights.ADMIN);
-            a.displayname = "Player";
+            Account a = new Account(username, "Player", password, Rights.ADMIN);
             a.gender = Gender.MALE;
 
             response = LoginResponse.LOGIN_OK;
-
             return a;
         }
 
@@ -83,6 +89,7 @@ namespace ServerEmulator.Core.Game
         public static void Save(Account a)
         {
             FileStream fs = new FileStream(ACCOUNT_PATH + a.username + ".xml", FileMode.Create);
+     
             //serializer.Serialize(fs, a);
         }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ServerEmulator.Core.Game;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -26,8 +27,9 @@ namespace ServerEmulator.Core.Network
 
         public void SendMessage(string msg)
         {
-            c.WriteOpCodeVarSize(MSG_SEND, (byte)(msg.Length + 1));
+            var pos = c.WriteOpCodeVar(MSG_SEND);
             c.Writer.WriteJString(msg);
+            c.FinishVarPacket(pos);
         }
 
         public void SendRequest(string name, bool isTrade = true)
@@ -43,7 +45,7 @@ namespace ServerEmulator.Core.Network
         public void SystemUpdate(ushort time)
         {
             c.WriteOpCode(SYSTEM_UPDATE_SECS);
-            c.Writer.WriteShort(time);
+            c.Writer.WriteLEShort(time);
         }
 
         public void Logout()
@@ -53,8 +55,9 @@ namespace ServerEmulator.Core.Network
 
         public void PlayerUpdate(byte[] update)
         {
-            c.WriteOpCodeVarSize(PLAYER_UPDATE, (short)(update.Length), false);
+            var p = c.WriteOpCodeVar(PLAYER_UPDATE, 2);
             c.Writer.BaseStream.Write(update, 0, update.Length);
+            c.FinishVarPacket(p, 2);
         }      
 
         public void Status(bool isMember, ushort playerId)
@@ -68,7 +71,7 @@ namespace ServerEmulator.Core.Network
         {
             c.WriteOpCode(PLAYER_SKILL);
             c.Writer.WriteByte(skillId);
-            c.Writer.WriteInt(xp);
+            c.Writer.WriteMEInt(xp);
             c.Writer.WriteByte(lvl);
         }
 
@@ -93,10 +96,11 @@ namespace ServerEmulator.Core.Network
 
         public void SetPlayerContextMenu(byte indexId, bool isPrimary, string text)
         {
-            c.WriteOpCode(PLAYER_RIGHTCLICK);
+            var p = c.WriteOpCodeVar(PLAYER_RIGHTCLICK);
             c.Writer.WriteNegatedByte(indexId);
             c.Writer.WriteByte(isPrimary ? 1 : 0);
             c.Writer.WriteJString(text);
+            c.FinishVarPacket(p);
         }
     
         public void ClearInventory(ushort id)
@@ -105,20 +109,34 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteShort(id);
         }
 
-        public void SetItems(ushort id, byte[] slot, ushort[] ids, int[] amts)
+        public void SetItems(ushort intfId, ItemStack[] items)
         {
-            c.WriteOpCode(ITEM_SET);
+            int p = c.WriteOpCodeVar(ITEM_SET, 2);
 
-            int size = slot.Length;
-            c.Writer.WriteLEShort(size);
-            c.Writer.WriteLEShort(id);
+            c.Writer.WriteShort(intfId);
+            c.Writer.WriteShort(items.Length);
 
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < items.Length; i++)
             {
-                c.Writer.WriteByte(slot[i]);
-                c.Writer.WriteShort(ids[i]);
-                c.Writer.WriteInt(amts[i]);
+                ItemStack s = items[i];
+                if(s.amount > 254)
+                {
+                    c.Writer.WriteByte(255);
+                    c.Writer.WriteIMEInt(s.amount);
+                }
+                else
+                {
+                    c.Writer.WriteByte(s.amount);
+                }
+                c.Writer.WriteLEShortA(s.id + 1);
             }
+
+            c.FinishVarPacket(p, 2);
+        }
+
+        public void SetItemSlots()
+        {
+            int p = c.WriteOpCodeVar(ITEM_SLOT_SET, 2);
         }
 
         public void ResetAnimations()
@@ -175,10 +193,15 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteShort(regionY);
         }
 
+        public void ConstructRegion()
+        {
+            c.WriteOpCode(REGION_CONSTRUCT);
+        }
+
         public void PlaySong(ushort id)
         {
             c.WriteOpCode(SONG_PLAY);
-            c.Writer.WriteShort(id);
+            c.Writer.WriteLEShort(id);
         }
 
         public void QueueSong(ushort id, ushort delay)
@@ -215,11 +238,19 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteLEShort(intfId);
         }
 
-        public void AssignSidebar(ushort sideBar, byte intfAssign)
+        public void SetInterfaceText(int id, string text)
+        {
+            int p = c.WriteOpCodeVar(INTF_TEXT_ADD, 2);
+            c.Writer.WriteJString(text);
+            c.Writer.WriteShortA(id);
+            c.FinishVarPacket(p, 2);
+        }
+
+        public void AssignSidebar(byte sideicon, ushort intf)
         {
             c.WriteOpCode(SIDEBAR_INTF_ASSIGN);
-            c.Writer.WriteShort(sideBar);
-            c.Writer.WriteByte(intfAssign);
+            c.Writer.WriteShort(intf);
+            c.Writer.WriteByte(sideicon + 128);
         }
 
         public void ClearInterfaces()
@@ -230,6 +261,19 @@ namespace ServerEmulator.Core.Network
         public void InputBox(bool textInput)
         {
             c.WriteOpCode(textInput ? INTF_ENTER_NAME : INTF_ENTER_AMT);
+        }
+
+        public void FriendList(byte status)
+        {
+            c.WriteOpCode(FRIENDLIST_STATUS);
+            c.Writer.WriteByte(status);
+        }
+
+        public void SetFriend(string friend, short world)
+        {
+            c.WriteOpCode(FRIEND_ADD);
+            c.Writer.WriteLong(Extensions.ToLong(friend));
+            c.Writer.WriteByte(world < 0 ? 0 : (world + 9));
         }
 
     }

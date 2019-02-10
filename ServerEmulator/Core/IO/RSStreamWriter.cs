@@ -38,6 +38,22 @@ namespace ServerEmulator.Core.IO
             BaseStream.WriteByte((byte)i);
         }
 
+        public void WriteMEInt(int i) //middle endian
+        {
+            BaseStream.WriteByte((byte)(i >> 8));
+            BaseStream.WriteByte((byte)(i));
+            BaseStream.WriteByte((byte)(i >> 24));
+            BaseStream.WriteByte((byte)(i >> 16));
+        }
+
+        public void WriteIMEInt(int i)
+        {
+            BaseStream.WriteByte((byte)(i >> 16));
+            BaseStream.WriteByte((byte)(i >> 24));
+            BaseStream.WriteByte((byte)(i));
+            BaseStream.WriteByte((byte)(i >> 8));
+        }
+
         public void WriteJString(string s)
         {
             byte[] bytes = new byte[s.Length];

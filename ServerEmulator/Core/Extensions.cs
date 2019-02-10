@@ -41,7 +41,7 @@ namespace ServerEmulator.Core
             return bytes;
         }
 
-        public static string LongToString(long l)
+        public static string ToString(this long l)
         {
             if (l <= 0L || l >= 0x5b5b57f8a98a5dd1L)
                 return null;
@@ -58,7 +58,7 @@ namespace ServerEmulator.Core
             return new string(ac, 12 - i, i);
         }
 
-        public static long StringToLong(string s)
+        public static long ToLong(this string s)
         {
             long l = 0L;
             for (int i = 0; i < s.Length && i < 12; i++)
@@ -75,6 +75,33 @@ namespace ServerEmulator.Core
             while (l % 37L == 0L && l != 0L)
                 l /= 37L;
             return l;
+        }
+
+        public static int PackGJString2(int position, byte[] buffer, string str)
+        {
+            int length = str.Length;
+            int offset = position;
+            for (int i = 0; length > i; i++)
+            {
+                int character = str[i];
+                if (character > 127)
+                {
+                    if (character > 2047)
+                    {
+                        buffer[offset++] = (byte)((character | 919275) >> 12);
+                        buffer[offset++] = (byte)(128 | ((character >> 6) & 63));
+                        buffer[offset++] = (byte)(128 | (character & 63));
+                    }
+                    else
+                    {
+                        buffer[offset++] = (byte)((character | 12309) >> 6);
+                        buffer[offset++] = (byte)(128 | (character & 63));
+                    }
+                }
+                else
+                    buffer[offset++] = (byte)character;
+            }
+            return offset - position;
         }
     }
 }

@@ -25,12 +25,21 @@ namespace ServerEmulator.Core.Network
 
             handles = new Action[Constants.INCOMING_SIZES.Length];
             handles[IDLE] = Idle;
-            handles[WALK] = Walk;
-            handles[WALK_MINIMAP] = MinimapWalk;
-            handles[WALK_ON_COMMAND] = WalkCMD;
+            handles[MOUSE_CLICK] = MouseClick;
+            handles[CAMERA_MOVE] = Camera;
+
+            handles[WALK] = () => Walk();
+            handles[WALK_MINIMAP] = () => Walk(14);
+            handles[WALK_ON_COMMAND] = () => Walk();
+
+            handles[NPC_OPT_1] = () => NpcAction(1);
+            handles[OBJ_OPT_1] = () => ObjectAction(1);
+            handles[FLOORITEM_OPT_1] = () => GroundItemAction(1);
+               
+
             handles[INTF_ACTION_BTN] = ActionButton;
             handles[CHAT_MSG_SEND] = ChatMessage;
-            handles[MOUSE_CLICK] = MouseClick;
+            
 
             for (int i = 0; i < handles.Length; i++)
             {
@@ -44,14 +53,24 @@ namespace ServerEmulator.Core.Network
             reader = c.Reader;
         }
 
-        private void MouseClick()
+        private void GroundItemAction(int option)
         {
-           // Program.Debug("Mouseclick");
+            //throw new NotImplementedException();
+        }
+
+        private void ObjectAction(int option)
+        {
+            //throw new NotImplementedException();
+        }
+
+        private void NpcAction(int option)
+        {
+            //throw new NotImplementedException();
         }
 
         public void Handle(byte opCode, bool firstByte)
         {
-            if(firstByte)
+            if (firstByte)
                 dataLeft = Constants.INCOMING_SIZES[opCode];
 
             if (!firstByte)
@@ -61,7 +80,7 @@ namespace ServerEmulator.Core.Network
                 else
                     dataLeft = 0;
             }
- 
+
             if (dataLeft < 0) //-1 = variable size; receive the size byte
                 c.ReceiveData(1);
             else if (dataLeft > 0)
@@ -70,7 +89,22 @@ namespace ServerEmulator.Core.Network
             {
                 handles[opCode]();
                 c.ReceiveData(); //receive next opcode
-            } 
+            }
+        }
+
+        private void Idle()
+        {
+            // Program.Debug("Idling...");
+        }
+
+        private void MouseClick()
+        {
+            // Program.Debug("Mouseclick");
+        }
+
+        private void Camera()
+        {
+            // Program.Debug("Camera");
         }
 
         private void ChatMessage()
@@ -78,10 +112,9 @@ namespace ServerEmulator.Core.Network
             Program.Debug("Chat msg");
         }
 
-
-        private void Walk()
+        private void Walk(int ignore = 0)
         {
-            int count = (int)((reader.BaseStream.Length - 5) / 2);
+            int count = (int)((reader.BaseStream.Length - 5 - ignore) / 2);
             int[] xs = new int[count];
             int[] ys = new int[count];
 
@@ -107,27 +140,15 @@ namespace ServerEmulator.Core.Network
             sbyte keyStat = reader.ReadNegByte();
             client.SetMovement(waypoints);
 
-            Program.Debug("Walking screen ");
+            Program.Debug("Do Walking");
         }
 
-        private void MinimapWalk()
-        {
-            Program.Debug("Walking minimap");
-        }
-
-        private void WalkCMD()
-        {
-            Program.Debug("Walking cmd");
-        }
 
         private void ActionButton()
         {
             Program.Debug("Action btn");
         }
 
-        private void Idle()
-        {
-           // Program.Debug("Idling...");
-        }
+        
     }
 }
