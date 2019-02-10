@@ -9,6 +9,13 @@ namespace ServerEmulator.Core.Network
     delegate void ConnectionUpdate(Connection c);
     delegate void PacketHandle(byte opCode, bool firstByte);
 
+    struct VarSizePacket
+    {
+        public int type;
+        public long position;
+        public enum Type : int { BYTE = 1, SHORT = 2 }
+    }
+
     //toadd: encryption, connection timeout, limit login tries? disconnect when too much data is sent (ddos protection)
     //check for connection lost, valid data received, too much data received (put on a timer?)
     class Connection : IDisposable
@@ -99,26 +106,28 @@ namespace ServerEmulator.Core.Network
             Writer.WriteByte((byte)(opCode + outRng.Next()));;
         }
 
-        public int WriteOpCodeVar(byte opcode, byte reserveBytes = 1)
+        public VarSizePacket WriteOpCodeVar(byte opcode, VarSizePacket.Type type = VarSizePacket.Type.BYTE)
         {
             WriteOpCode(opcode);
-            for (int i = 0; i < reserveBytes; i++)
+            for (int i = 0; i < (int)type; i++)
                 Writer.WriteByte(0);
-            return (int)Writer.BaseStream.Length;
+
+            var packet = new VarSizePacket() { position = Writer.BaseStream.Length, type = (int)type };
+
+            return packet;
         }
 
-        public void FinishVarPacket(int startPos, byte reservedBytes = 1)
+        public void FinishVarPacket(VarSizePacket p)
         {
             var endPos = Writer.BaseStream.Length;
-            var packetSize = (int)(endPos - startPos);
-            Writer.BaseStream.Position = startPos - reservedBytes;
+            var packetSize = endPos - p.position;
 
-            if (reservedBytes == 1)
-                Writer.WriteByte(packetSize);
-            else if (reservedBytes == 2)
-                Writer.WriteShort(packetSize);
+            Writer.BaseStream.Position = p.position - p.type;
+
+            if (p.type == 1)
+                Writer.WriteByte((int)packetSize);
             else
-                throw new NotSupportedException();
+                Writer.WriteShort((int)packetSize);
 
             Writer.BaseStream.Position = endPos;
         }

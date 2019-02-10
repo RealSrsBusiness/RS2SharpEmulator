@@ -21,7 +21,7 @@ namespace ServerEmulator.Core.Network
         public PacketHandler(Client client)
         {
             this.client = client;
-            c = client.Con;
+            c = client.Packets.C;
 
             handles = new Action[Constants.INCOMING_SIZES.Length];
             handles[IDLE] = Idle;

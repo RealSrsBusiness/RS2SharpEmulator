@@ -11,25 +11,25 @@ namespace ServerEmulator.Core.Network
 {
     class StaticPackets
     {
-        Connection c;
+        internal Connection C { get; private set; }
 
         public StaticPackets(Connection c)
         {
-            this.c = c;
+            C = c;
         }
 
         public void SetConfig(ushort id, byte value)
         {
-            c.WriteOpCode(CONFIG_SET);
-            c.Writer.WriteLEShort(id);
-            c.Writer.WriteByte(value);
+            C.WriteOpCode(CONFIG_SET);
+            C.Writer.WriteLEShort(id);
+            C.Writer.WriteByte(value);
         }
 
         public void SendMessage(string msg)
         {
-            var pos = c.WriteOpCodeVar(MSG_SEND);
-            c.Writer.WriteJString(msg);
-            c.FinishVarPacket(pos);
+            var pos = C.WriteOpCodeVar(MSG_SEND);
+            C.Writer.WriteJString(msg);
+            C.FinishVarPacket(pos);
         }
 
         public void SendRequest(string name, bool isTrade = true)
@@ -44,236 +44,241 @@ namespace ServerEmulator.Core.Network
 
         public void SystemUpdate(ushort time)
         {
-            c.WriteOpCode(SYSTEM_UPDATE_SECS);
-            c.Writer.WriteLEShort(time);
+            C.WriteOpCode(SYSTEM_UPDATE_SECS);
+            C.Writer.WriteLEShort(time);
         }
 
         public void Logout()
         {
-            c.WriteOpCode(DISCONNECT);
+            C.WriteOpCode(DISCONNECT);
         }
-
-        public void PlayerUpdate(byte[] update)
-        {
-            var p = c.WriteOpCodeVar(PLAYER_UPDATE, 2);
-            c.Writer.BaseStream.Write(update, 0, update.Length);
-            c.FinishVarPacket(p, 2);
-        }      
 
         public void Status(bool isMember, ushort playerId)
         {
-            c.WriteOpCode(PLAYER_STATUS);
-            c.Writer.WriteByte(isMember ? 1 : 0);
-            c.Writer.WriteShort(playerId);
+            C.WriteOpCode(PLAYER_STATUS);
+            C.Writer.WriteByte(isMember ? 1 : 0);
+            C.Writer.WriteShort(playerId);
         }
 
         public void SetSkill(byte skillId, int xp, byte lvl)
         {
-            c.WriteOpCode(PLAYER_SKILL);
-            c.Writer.WriteByte(skillId);
-            c.Writer.WriteMEInt(xp);
-            c.Writer.WriteByte(lvl);
+            C.WriteOpCode(PLAYER_SKILL);
+            C.Writer.WriteByte(skillId);
+            C.Writer.WriteMEInt(xp);
+            C.Writer.WriteByte(lvl);
         }
 
         public void LocalPosition(byte x, byte y)
         {
-            c.WriteOpCode(PLAYER_LOCATION);
-            c.Writer.WriteNegatedByte(y);
-            c.Writer.WriteNegatedByte(x);
+            C.WriteOpCode(PLAYER_LOCATION);
+            C.Writer.WriteNegatedByte(y);
+            C.Writer.WriteNegatedByte(x);
         }
 
         public void RunEnergy(byte energy)
         {
-            c.WriteOpCode(PLAYER_RUN_ENERGY);
-            c.Writer.WriteByte(energy);
+            C.WriteOpCode(PLAYER_RUN_ENERGY);
+            C.Writer.WriteByte(energy);
         }
 
         public void Weight(short weight)
         {
-            c.WriteOpCode(PLAYER_WEIGHT);
-            c.Writer.WriteShort(weight);
+            C.WriteOpCode(PLAYER_WEIGHT);
+            C.Writer.WriteShort(weight);
         }
 
         public void SetPlayerContextMenu(byte indexId, bool isPrimary, string text)
         {
-            var p = c.WriteOpCodeVar(PLAYER_RIGHTCLICK);
-            c.Writer.WriteNegatedByte(indexId);
-            c.Writer.WriteByte(isPrimary ? 1 : 0);
-            c.Writer.WriteJString(text);
-            c.FinishVarPacket(p);
+            var p = C.WriteOpCodeVar(PLAYER_RIGHTCLICK);
+            C.Writer.WriteNegatedByte(indexId);
+            C.Writer.WriteByte(isPrimary ? 1 : 0);
+            C.Writer.WriteJString(text);
+            C.FinishVarPacket(p);
         }
     
         public void ClearInventory(ushort id)
         {
-            c.WriteOpCode(ITEM_ALL_CLEAR);
-            c.Writer.WriteShort(id);
+            C.WriteOpCode(ITEM_ALL_CLEAR);
+            C.Writer.WriteShort(id);
         }
 
         public void SetItems(ushort intfId, ItemStack[] items)
         {
-            int p = c.WriteOpCodeVar(ITEM_SET, 2);
+            var p = C.WriteOpCodeVar(ITEM_SET, VarSizePacket.Type.SHORT);
 
-            c.Writer.WriteShort(intfId);
-            c.Writer.WriteShort(items.Length);
+            C.Writer.WriteShort(intfId);
+            C.Writer.WriteShort(items.Length);
 
             for (int i = 0; i < items.Length; i++)
             {
                 ItemStack s = items[i];
                 if(s.amount > 254)
                 {
-                    c.Writer.WriteByte(255);
-                    c.Writer.WriteIMEInt(s.amount);
+                    C.Writer.WriteByte(255);
+                    C.Writer.WriteIMEInt(s.amount);
                 }
                 else
                 {
-                    c.Writer.WriteByte(s.amount);
+                    C.Writer.WriteByte(s.amount);
                 }
-                c.Writer.WriteLEShortA(s.id + 1);
+                C.Writer.WriteLEShortA(s.id + 1);
             }
 
-            c.FinishVarPacket(p, 2);
+            C.FinishVarPacket(p);
         }
 
         public void SetItemSlots()
         {
-            int p = c.WriteOpCodeVar(ITEM_SLOT_SET, 2);
+            var p = C.WriteOpCodeVar(ITEM_SLOT_SET, VarSizePacket.Type.SHORT);
         }
 
         public void ResetAnimations()
         {
-            c.WriteOpCode(ANIM_ALL_RESET);
+            C.WriteOpCode(ANIM_ALL_RESET);
         }
 
         public void SetGFX(byte offset, ushort gfx, byte renderOffset, ushort delay)
         {
-            c.WriteOpCode(ANIM_SET);
-            c.Writer.WriteByte(offset);
-            c.Writer.WriteShort(gfx);
-            c.Writer.WriteByte(renderOffset);
-            c.Writer.WriteShort(delay);
+            C.WriteOpCode(ANIM_SET);
+            C.Writer.WriteByte(offset);
+            C.Writer.WriteShort(gfx);
+            C.Writer.WriteByte(renderOffset);
+            C.Writer.WriteShort(delay);
         }
 
         public void Multicombat(bool set)
         {
-            c.WriteOpCode(MULTICOMBAT);
-            c.Writer.WriteByte(set ? 1 : 0);
-        }
-
-        public void NPCUpdate()
-        {
-            c.WriteOpCode(NPC_UPDATE);
+            C.WriteOpCode(MULTICOMBAT);
+            C.Writer.WriteByte(set ? 1 : 0);
         }
 
         public void AddObject(int position, ushort id, byte data)
         {
-            c.WriteOpCode(OBJ_ADD);
-            c.Writer.WriteByte(position);
-            c.Writer.WriteShort(id);
-            c.Writer.WriteByte(data);
+            C.WriteOpCode(OBJ_ADD);
+            C.Writer.WriteByte(position);
+            C.Writer.WriteShort(id);
+            C.Writer.WriteByte(data);
         }
 
         public void CreateProjectile(
             byte angle, byte desX, byte desY, short target, ushort gfx,
             byte start, byte end, short time, short speed, byte slope, byte distance)
         {
-            c.WriteOpCode(PROJECTILE);
+            C.WriteOpCode(PROJECTILE);
         }
 
         public void AddFloorItem(int id, short amt, byte offset)
         {
-            c.WriteOpCode(FLOORITEM_ADD);
-            c.Writer.WriteShort(amt);
-            c.Writer.WriteByte(offset);
+            C.WriteOpCode(FLOORITEM_ADD);
+            C.Writer.WriteShort(amt);
+            C.Writer.WriteByte(offset);
         }
 
         public void LoadRegion(ushort regionX, ushort regionY)
         {
-            c.WriteOpCode(REGION_LOAD);
-            c.Writer.WriteShortA(regionX);
-            c.Writer.WriteShort(regionY);
+            C.WriteOpCode(REGION_LOAD);
+            C.Writer.WriteShortA(regionX);
+            C.Writer.WriteShort(regionY);
         }
 
         public void ConstructRegion()
         {
-            c.WriteOpCode(REGION_CONSTRUCT);
+            C.WriteOpCode(REGION_CONSTRUCT);
         }
 
         public void PlaySong(ushort id)
         {
-            c.WriteOpCode(SONG_PLAY);
-            c.Writer.WriteLEShort(id);
+            C.WriteOpCode(SONG_PLAY);
+            C.Writer.WriteLEShort(id);
         }
 
         public void QueueSong(ushort id, ushort delay)
         {
-            c.WriteOpCode(SONG_QUEUE);
-            c.Writer.WriteShort(id);
-            c.Writer.WriteShort(delay);
+            C.WriteOpCode(SONG_QUEUE);
+            C.Writer.WriteShort(id);
+            C.Writer.WriteShort(delay);
         }
 
         public void CameraShake(byte id, byte jitter, byte amp, byte freq)
         {
-            c.WriteOpCode(CAMERA_SHAKE);
-            c.Writer.WriteByte(id);
-            c.Writer.WriteByte(jitter);
-            c.Writer.WriteByte(amp);
-            c.Writer.WriteByte(freq);
+            C.WriteOpCode(CAMERA_SHAKE);
+            C.Writer.WriteByte(id);
+            C.Writer.WriteByte(jitter);
+            C.Writer.WriteByte(amp);
+            C.Writer.WriteByte(freq);
         }
 
         public void WelcomeMessage(
             byte daysSinceRec, ushort unreadMsg, 
             bool isMember, int lastIp, ushort daysLastLogin)
         {
-            c.WriteOpCode(INTF_WELCOME);
-            c.Writer.WriteByte(daysSinceRec);
-            c.Writer.WriteShort(unreadMsg);
-            c.Writer.WriteByte(isMember ? 1 : 0);
-            c.Writer.WriteInt(lastIp);
-            c.Writer.WriteShort(daysLastLogin);
+            C.WriteOpCode(INTF_WELCOME);
+            C.Writer.WriteByte(daysSinceRec);
+            C.Writer.WriteShort(unreadMsg);
+            C.Writer.WriteByte(isMember ? 1 : 0);
+            C.Writer.WriteInt(lastIp);
+            C.Writer.WriteShort(daysLastLogin);
         }
 
         public void ShowInterface(int intfId)
         {
-            c.WriteOpCode(INTF_SHOW);
-            c.Writer.WriteLEShort(intfId);
+            C.WriteOpCode(INTF_SHOW);
+            C.Writer.WriteLEShort(intfId);
         }
 
         public void SetInterfaceText(int id, string text)
         {
-            int p = c.WriteOpCodeVar(INTF_TEXT_ADD, 2);
-            c.Writer.WriteJString(text);
-            c.Writer.WriteShortA(id);
-            c.FinishVarPacket(p, 2);
+            var p = C.WriteOpCodeVar(INTF_TEXT_ADD, VarSizePacket.Type.SHORT);
+            C.Writer.WriteJString(text);
+            C.Writer.WriteShortA(id);
+            C.FinishVarPacket(p);
         }
 
         public void AssignSidebar(byte sideicon, ushort intf)
         {
-            c.WriteOpCode(SIDEBAR_INTF_ASSIGN);
-            c.Writer.WriteShort(intf);
-            c.Writer.WriteByte(sideicon + 128);
+            C.WriteOpCode(SIDEBAR_INTF_ASSIGN);
+            C.Writer.WriteShort(intf);
+            C.Writer.WriteByte(sideicon + 128);
         }
 
         public void ClearInterfaces()
         {
-            c.WriteOpCode(INTF_CLEAR);
+            C.WriteOpCode(INTF_CLEAR);
         }
 
         public void InputBox(bool textInput)
         {
-            c.WriteOpCode(textInput ? INTF_ENTER_NAME : INTF_ENTER_AMT);
+            C.WriteOpCode(textInput ? INTF_ENTER_NAME : INTF_ENTER_AMT);
         }
 
         public void FriendList(byte status)
         {
-            c.WriteOpCode(FRIENDLIST_STATUS);
-            c.Writer.WriteByte(status);
+            C.WriteOpCode(FRIENDLIST_STATUS);
+            C.Writer.WriteByte(status);
         }
 
         public void SetFriend(string friend, short world)
         {
-            c.WriteOpCode(FRIEND_ADD);
-            c.Writer.WriteLong(Extensions.ToLong(friend));
-            c.Writer.WriteByte(world < 0 ? 0 : (world + 9));
+            C.WriteOpCode(FRIEND_ADD);
+            C.Writer.WriteLong(Extensions.ToLong(friend));
+            C.Writer.WriteByte(world < 0 ? 0 : (world + 9));
+        }
+
+        public void PlayerUpdate(byte[] update)
+        {
+            var p = C.WriteOpCodeVar(PLAYER_UPDATE, VarSizePacket.Type.SHORT);
+            C.Writer.BaseStream.Write(update, 0, update.Length);
+            C.FinishVarPacket(p);
+        }
+
+        public void NPCUpdate(byte[] data)
+        {
+            C.WriteOpCode(NPC_UPDATE);
+        }
+
+        public void RegionalUpdate(byte[] data)
+        {
+            C.WriteOpCodeVar(REGION_UPDATE);
         }
 
     }

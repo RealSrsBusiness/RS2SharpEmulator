@@ -19,7 +19,7 @@ namespace ServerEmulator.Core
         Socket listener;
 
         private int delayedTicks;
-        private object _lockObj = new object();
+        private object _lock = new object();
         public bool Running { get; set; }
 
         public void Start()
@@ -68,7 +68,7 @@ namespace ServerEmulator.Core
 
         public void RegisterClient(Client client)
         {
-            lock (_lockObj)
+            lock (_lock)
             {
                 establishedClients.Add(client);
             }
@@ -76,7 +76,7 @@ namespace ServerEmulator.Core
 
         public void UnregisterClient(Client client)
         {
-            lock (_lockObj)
+            lock (_lock)
             {
                 establishedClients.Remove(client);
             }
@@ -119,7 +119,7 @@ namespace ServerEmulator.Core
         void Disconnect_Client(Connection c)
         {
             connections.Remove(c);
-            establishedClients.RemoveAll(client => client.Con == c);
+            establishedClients.RemoveAll(client => client.Packets.C == c);
             Program.Log("Connection lost {0}", c.EndPoint);
         }
     }

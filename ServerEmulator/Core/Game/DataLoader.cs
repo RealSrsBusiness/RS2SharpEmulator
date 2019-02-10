@@ -14,12 +14,17 @@ namespace ServerEmulator.Core.Game
         public static bool LoadingComplete { get; private set; } = false;
         internal static Dictionary<short, int[]> mapXteas = new Dictionary<short, int[]>();
 
-        public static NPC[] Npcs;
-        public static Item[] Items;
-        public static GameObject[] Objects;
+        internal static NPC[] Npcs;
+        internal static Item[] Items;
+        internal static GameObject[] Objects;
 
-        public static Dictionary<int, Action> ActionButtons;
-        public static Definition PlayerActions;
+        internal static Dictionary<int, Action> ActionButtons;
+        internal static Definition PlayerActions;
+
+        internal static object[] CreateCustomStates()
+        {
+            return null;
+        }
 
         internal static void LoadContent()
         {
@@ -62,9 +67,9 @@ namespace ServerEmulator.Core.Game
                     {
                         Type t = types[j];
 
-                        if (typeof(IContent) == t)
+                        if (typeof(Content) == t)
                         {
-                            IContent module = (IContent)Activator.CreateInstance(t);
+                            Content module = (Content)Activator.CreateInstance(t);
                             module.Load();
                         }
                     }

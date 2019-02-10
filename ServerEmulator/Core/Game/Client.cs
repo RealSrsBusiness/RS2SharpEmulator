@@ -17,52 +17,31 @@ namespace ServerEmulator.Core.Game
     /// </summary>
     class Client
     {
-        private readonly object _lock = new object();
-        List<object> customStates = new List<object>();
-
-        public Connection Con { get; private set; }
         public StaticPackets Packets { get; private set; }
 
-        public Account Acc { get; private set; }
         public PlayerEntity Player { get; private set; }
-
-        List<PlayerEntity> nearbyPlayers = new List<PlayerEntity>();
-        List<NPCEntity> nearbyNpcs = new List<NPCEntity>();
+        public Account Account { get; private set; }
 
         DateTime loginTime;
-
         int activeInterface = -1;
         bool focused = true;
 
-        //todo: make static
-        public int AddState(object o)
+        object[] customStates;
+
+        public Client(Connection connection, Account account)
         {
-            if (DataLoader.LoadingComplete)
-                throw new InvalidOperationException("New states cannot be added, once loading is completed.");
+            connection.onDisconnect += (Connection c) => Disconnect();
+            Packets = new StaticPackets(connection);
+            customStates = DataLoader.CreateCustomStates();
 
-            customStates.Add(o);
-            return customStates.IndexOf(o);
-        }
-
-        public T GetState<T>(int index)
-        {
-            return (T)customStates[index];
-        }
-
-        public Client(Connection con, Account acc)
-        {
-            this.Con = con;
-            this.Acc = acc;
-            con.onDisconnect += CleanUp;
-            Packets = new StaticPackets(con);
-
+            Account = account;
             Player = new PlayerEntity();
             Player.id = AllocPlayerSlot();
 
             if (Player.id == -1)
                 Program.Warning("Server Full");
 
-            Player.Update = PlayerUpdate;
+            //Player.Update = PlayerUpdate;
             Player.appearanceValues = new int[] { -1, -1, -1, -1, 18, -1, 26, 36, 0, 33, 42, 10 };
             Player.colorValues = new int[] { 7, 8, 9, 5, 0 };
             Player.animations = new int[] { 808, 823, 819, 820, 821, 822, 824 };
@@ -72,6 +51,22 @@ namespace ServerEmulator.Core.Game
             loginTime = DateTime.Now;
 
             Init();
+        }
+
+        /// <summary>
+        /// Update this client
+        /// </summary>
+        public void UpdateScreen()
+        {
+            int movedX = Player.LocalX, movedY = Player.LocalY;
+            if (movedX < 15 || movedX > 88 || movedY < 15 || movedY > 88)
+                Packets.LoadRegion(Player.RegionX, Player.RegionY);
+
+            Packets.PlayerUpdate(null);
+            Packets.NPCUpdate(null);
+            Packets.RegionalUpdate(null);
+
+            Packets.C.Send();
         }
 
         static int[] SIDE_BARS = { 2423, 3917, 638, 3213, 1644, 5608, 1151, -1, 5065, 5715, 2449, 904, 147, 962 };
@@ -88,9 +83,9 @@ namespace ServerEmulator.Core.Game
                 Packets.AssignSidebar((byte)i, (ushort)SIDE_BARS[i]);
             }
 
-            for (int i = 0; i < Acc.skills.Length; i++)
+            for (int i = 0; i < Account.skills.Length; i++)
             {
-                var skill = Acc.skills[i];
+                var skill = Account.skills[i];
                 Packets.SetSkill((byte)i, skill.xp, (byte)skill.level);
             }
 
@@ -120,7 +115,7 @@ namespace ServerEmulator.Core.Game
             Packets.SetPlayerContextMenu(1, false, "Attack");
             Packets.PlaySong(125);
 
-            Con.Send();
+            Packets.C.Send();
         }
 
         public void SetMovement(Coordinate[] waypointCoords)
@@ -129,102 +124,19 @@ namespace ServerEmulator.Core.Game
             Player.walkingQueue = 0;
         }
 
-        
-        int movedX = 0, movedY = 0;
-        bool loadNewRegion = false;
-
-        List<bool> bitBuffer = new List<bool>();
-        MemoryStream byteBuffer = new MemoryStream();
-
-        public void PlayerUpdate()
+        public T GetState<T>(int index)
         {
-            bitBuffer.Clear();
-            WritePlayerMovement(ref bitBuffer);
-            WritePlayerEffectUpdate(ref byteBuffer);
-        }
-
-        public void WritePlayerMovement(ref List<bool> bits)
-        {
-            if (movedX < 15 || movedX > 88 || movedY < 15 || movedY > 88)
-            {
-                loadNewRegion = true;
-                movedX = Player.LocalX;
-                movedY = Player.LocalY;
-            }
-        }
-
-        public void UpdateLocalEntities()
-        {
-            var entities = World.globalEntities;
-
-            for (int i = 0; i < entities.Count; i++)
-            {
-                WorldEntity entity = entities[i];
-                if (entity == Player)
-                    continue;
-
-                if(entity is PlayerEntity)
-                {
-
-                }
-
-                if(entity is NPCEntity)
-                {
-
-                }
-
-            }
-        }
-
-        public void WriteOtherPlayerAppearances(ref MemoryStream ms)
-        {
-            for (int i = 0; i < nearbyPlayers.Count; i++)
-            {
-                PlayerEntity p = nearbyPlayers[i];
-                if(p.EffectUpdateRequired)
-                {
-                    WritePlayerEffectUpdate(ref ms);
-                } 
-            }
-        }
-
-        //gender, headicon, bodyparts, idle animations
-        public void WritePlayerEffectUpdate(ref MemoryStream ms)
-        {
-            
-        }
-
-        /// <summary>
-        /// Update this client
-        /// </summary>
-        public void UpdateScreen()
-        {
-            if(loadNewRegion)
-            {
-                Packets.LoadRegion(Player.RegionX, Player.RegionY);
-                loadNewRegion = false;
-            }
-
-            byte[] update = null;
-            Packets.PlayerUpdate(update);
-
-            Con.Send();
+            return (T)customStates[index];
         }
 
         public void Disconnect()
         {
             Packets.Logout();
-            CleanUp(null);
-        }
-
-        public void CleanUp(Connection c)
-        {
             FreePlayerSlot(Player.id);
             World.UnregisterEntity(Player);
         }
 
-
-
+        private readonly object _lock = new object();
     }
 
     

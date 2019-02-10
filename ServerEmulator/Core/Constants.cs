@@ -8,7 +8,7 @@ namespace ServerEmulator.Core
     {
         public const int PORT = 43594;
         public const int CYCLE_TIME = 600;
-        public const int SUB_CYCLES = 3;
+        public const int SUB_CYCLES = 2;
         public const int MAX_CONNECTIONS = 3072;
         public const int MAX_PLAYER = 2048;
         public const int SERVER_REV = 317;
@@ -17,7 +17,7 @@ namespace ServerEmulator.Core
         public const string SERVER_NAME = "C# Server Emulator";
         public const string WELCOME_MSG = "Welcome to " + SERVER_NAME;
         public const int SPAWN_X = 3200, SPAWN_Y = 3200;
-        public const bool VERIFY_COLLISIONS = false, PRELOAD_MAP = false;
+        public const bool VERIFY_OBJECTS = false, PRELOAD_MAP = false;
 
         public const string DATA_PATH = "data\\";
         public const string PLUGIN_PATH = DATA_PATH + "plugins\\";
@@ -158,7 +158,7 @@ namespace ServerEmulator.Core
             public const byte FLOORITEM_UNKNOWN = 84;
             public const byte FLOORITEM_UNKNOWN2 = 215;
 
-            public const byte REGION = 60;
+            public const byte REGION_UPDATE = 60;
             public const byte REGION_LOAD = 73;
             public const byte REGION_CONSTRUCT = 241;
 

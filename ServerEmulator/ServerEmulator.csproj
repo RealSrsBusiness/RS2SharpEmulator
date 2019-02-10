@@ -46,7 +46,7 @@
     <Compile Include="Core\Game\Types\SimpleAbstracts.cs" />
     <Compile Include="Core\Game\DataLoader.cs" />
     <Compile Include="Core\Game\Types\Definitions.cs" />
-    <Compile Include="Core\Game\IContent.cs" />
+    <Compile Include="Core\Game\Content.cs" />
     <Compile Include="Core\Game\Types\Entities.cs" />
     <Compile Include="Core\Game\Types\Movement.cs" />
     <Compile Include="Core\Network\EntityUpdates.cs" />
