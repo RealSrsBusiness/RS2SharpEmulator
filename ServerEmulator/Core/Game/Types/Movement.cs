@@ -62,12 +62,9 @@ namespace ServerEmulator.Core.Game
             }
         }
 
-        public static Direction[] InterpolateWaypoints(Coordinate[] waypointCoords, int x, int y)
+        public static Direction[] InterpolateWaypoints(Coordinate[] waypointCoords, int lastX, int lastY)
         {
             List<Direction> path = new List<Direction>();
-
-            var lastX = x;
-            var lastY = y;
 
             for (int i = 0; i < waypointCoords.Length; i++)
             {

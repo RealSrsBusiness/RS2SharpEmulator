@@ -52,6 +52,12 @@ namespace ServerEmulator.Core.Game
                 globalEntities[i].Update?.Invoke();
         }
 
+        public static void FinalizeWorld()
+        {
+            for (int i = 0; i < globalEntities.Count; i++)
+                globalEntities[i].Process();
+        }
+
         //if region is set, this entity will only be updated if it's seen by a client in that region
         public static void RegisterEntity(WorldEntity entity, Region updateRegion = null)
         {

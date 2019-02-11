@@ -9,6 +9,7 @@ namespace ServerEmulator.Content.Skills
     class Test : Core.Game.Content
     {
 
+
         public override void Load()
         {
 
@@ -17,7 +18,12 @@ namespace ServerEmulator.Content.Skills
                 
                 Objects[i].OnAction[0] = (Client c) =>
                 {
-                    c.GetState<object>(0);
+                    c.GetState<Cxt>(0).test = 66;
+
+                    c.State().test = 66;
+
+                    //c.NextRandom();
+                    //c.ValueRandom();
 
 
                 };
@@ -25,4 +31,11 @@ namespace ServerEmulator.Content.Skills
             }
         }
     }
+
+    internal class Cxt
+    {
+        public int test;
+    }
+
+    static class Ex { public static Cxt State(this Client c) => c.GetState<Cxt>(0); }
 }

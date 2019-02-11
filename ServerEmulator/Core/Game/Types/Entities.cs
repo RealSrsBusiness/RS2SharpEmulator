@@ -29,13 +29,15 @@ namespace ServerEmulator.Core.Game
             return new Coordinate() { x = difX, y = difY };
         }
 
+        public virtual void Process() { }
+
         public class PlayerEntity : WorldEntity
         {
             public EffectMaskPlayer effectUpdateMask = EffectMaskPlayer.NONE;
             public bool justSpawned, running = true, teleported = false;
 
             public Direction[] movement = new Direction[0];
-            public int walkingQueue = 0;
+            public int walkingQueue = -1;
 
             public byte gender = 0, headicon = 0;
             public long username;
@@ -43,6 +45,8 @@ namespace ServerEmulator.Core.Game
             public int[] appearanceValues;
             public int[] colorValues;
             public int[] animations;
+
+            public byte[] effectBuffer = null;
 
             public byte CombatLevel { get { return 3; } }
             public ushort Skill { get { return 0; } }
@@ -61,6 +65,18 @@ namespace ServerEmulator.Core.Game
                 FACING = 0x2, //x, y
                 DAMAGE = 0x20, //damage, type, curHealth, maxHealth
                 DAMAGE2 = 0x200 //damage, type, curHealth, maxHealth
+            }
+
+            public override void Process()
+            {
+                if(walkingQueue != -1)
+                {
+                    walkingQueue++;
+                    if(walkingQueue >= movement.Length)
+                    {
+                        walkingQueue = -1;
+                    }
+                }
             }
 
             public static int AllocPlayerSlot()

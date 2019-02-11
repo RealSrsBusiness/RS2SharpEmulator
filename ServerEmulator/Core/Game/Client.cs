@@ -41,7 +41,7 @@ namespace ServerEmulator.Core.Game
             if (Player.id == -1)
                 Program.Warning("Server Full");
 
-            //Player.Update = PlayerUpdate;
+            Player.Update = Update;
             Player.appearanceValues = new int[] { -1, -1, -1, -1, 18, -1, 26, 36, 0, 33, 42, 10 };
             Player.colorValues = new int[] { 7, 8, 9, 5, 0 };
             Player.animations = new int[] { 808, 823, 819, 820, 821, 822, 824 };
@@ -53,13 +53,95 @@ namespace ServerEmulator.Core.Game
             Init();
         }
 
+        List<WorldEntity> localEntities = new List<WorldEntity>();
+
         /// <summary>
-        /// Update this client
+        /// Builds all update packages that hold the current "screen" state
         /// </summary>
-        public void UpdateScreen()
+        public void RenderScreen()
         {
-            int movedX = Player.LocalX, movedY = Player.LocalY;
-            if (movedX < 15 || movedX > 88 || movedY < 15 || movedY > 88)
+            var global = World.globalEntities;
+            var nearBy = new Dictionary<WorldEntity, Coordinate>();
+
+            //get nearest entities
+            for (int i = 0; i < global.Count; i++)
+            {
+                var entity = global[i];
+                var distance = entity.VerifyDistance(Player.x, Player.y);
+
+                if (distance != Coordinate.NONE)
+                    nearBy.Add(entity, distance);
+            }
+
+            var toUpdateRemove = new List<EntityUpdates.EntityMovementUpdate>();
+            var toAdd = new List<EntityUpdates.PlayerListEntry>();
+
+            //remove old entities and update movement
+            foreach (var local in localEntities)
+            {
+                bool found = false;
+                foreach(var near in nearBy.Keys)
+                {
+                    if (near == local)
+                    {
+                        found = true;
+                        break;
+                    } 
+                }
+
+                bool remove = false;
+
+                if (!found)
+                {
+                    remove = true;
+                    localEntities.Remove(local);
+                }
+
+                var update = new EntityUpdates.EntityMovementUpdate();
+                update.shouldRemove = remove;
+                //get movement
+
+                toUpdateRemove.Add(update);
+            }
+
+            //add new entities
+            foreach(var near in nearBy)
+            {
+                var res = localEntities.Find((WorldEntity e) => e == near.Key);
+                if (res == null)
+                {
+                    var entity = near.Key;
+
+                    var addPlayer = new EntityUpdates.PlayerListEntry();
+                    addPlayer.index = entity.id;
+                    addPlayer.x = entity.LocalX;
+                    addPlayer.y = entity.LocalY;
+                    //addPlayer.teleport = entity.teleport;
+                    //addPlayer.effectUpdate = entity.effect;
+
+                    toAdd.Add(addPlayer);
+                    localEntities.Add(entity);
+                }
+            }
+
+            //write updates
+            List<bool> bits = new List<bool>();
+
+            if (Player.justSpawned)
+                EntityUpdates.WritePlayerMovement(ref bits, Player.EffectUpdateRequired, Player.LocalX, Player.LocalY, Player.z, Player.teleported);
+            else if (Player.walkingQueue != -1)
+            {
+                var nextStep = Player.movement[Player.walkingQueue];
+                EntityUpdates.WritePlayerMovement(ref bits, Player.EffectUpdateRequired, (int)nextStep);
+            }
+
+            EntityUpdates.WriteEntityMovement(ref bits, toUpdateRemove.ToArray());
+            EntityUpdates.WriteNewPlayerList(ref bits, toAdd.ToArray());
+
+
+
+            int mX = Player.LocalX, mY = Player.LocalY;
+            if (mX < 15 || mX > 88 || mY < 15 || mY > 88)
                 Packets.LoadRegion(Player.RegionX, Player.RegionY);
 
             Packets.PlayerUpdate(null);
@@ -67,6 +149,14 @@ namespace ServerEmulator.Core.Game
             Packets.RegionalUpdate(null);
 
             Packets.C.Send();
+        }
+
+        /// <summary>
+        /// Processes all queued up tasks
+        /// </summary>
+        private void Update()
+        {
+
         }
 
         static int[] SIDE_BARS = { 2423, 3917, 638, 3213, 1644, 5608, 1151, -1, 5065, 5715, 2449, 904, 147, 962 };
@@ -77,7 +167,7 @@ namespace ServerEmulator.Core.Game
             Packets.RunEnergy(100);
             Packets.Weight(30);
             Packets.SendMessage(WELCOME_MSG);
-
+            //
             for (int i = 0; i < SIDE_BARS.Length; i++)
             {
                 Packets.AssignSidebar((byte)i, (ushort)SIDE_BARS[i]);

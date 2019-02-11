@@ -7,6 +7,10 @@ using System.Reflection;
 using System.Text;
 using static ServerEmulator.Core.Constants;
 
+using Microsoft.CSharp;
+using System.CodeDom;
+using System.CodeDom.Compiler;
+
 namespace ServerEmulator.Core.Game
 {
     class DataLoader
@@ -48,6 +52,7 @@ namespace ServerEmulator.Core.Game
 
         private static void Scripts()
         {
+            var csharp = new CSharpCodeProvider();
 
         }
 

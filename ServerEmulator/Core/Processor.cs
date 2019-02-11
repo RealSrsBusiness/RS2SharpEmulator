@@ -42,14 +42,16 @@ namespace ServerEmulator.Core
                 sw.Start();
 
                 //update all entities (actions, movement of players, npcs etc) and build packages
-                World.ProcessWorld();
+                World.ProcessWorld(); //I don't think this is needed, can probably be combined with finalizeWorld()
 
                 //update what all the clients see and send out packages
                 for (int i = 0; i < establishedClients.Count; i++)
                 {
                     Client client = establishedClients[i];
-                    client.UpdateScreen();
+                    client.RenderScreen();
                 }
+
+                World.FinalizeWorld();
 
                 sw.Stop();
                 int remainingSleep = CYCLE_TIME - (int)sw.ElapsedMilliseconds;

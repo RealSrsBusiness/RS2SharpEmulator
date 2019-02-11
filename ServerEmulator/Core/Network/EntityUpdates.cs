@@ -9,16 +9,16 @@ using static ServerEmulator.Core.Game.WorldEntity.PlayerEntity;
 
 namespace ServerEmulator.Core.NetworkProtocol
 {
-    class EntityUpdates
+    internal class EntityUpdates
     {
-        struct PlayerListEntry
+        internal struct PlayerListEntry
         {
             public int index, x, y;
             public bool effectUpdate, teleport;
         }
 
         //written when there are new players in the area
-        static void WriteNewPlayerList(ref List<bool> data, PlayerListEntry[] newPlayers)
+        internal static void WriteNewPlayerList(ref List<bool> data, PlayerListEntry[] newPlayers)
         {
             for (int i = 0; i < newPlayers.Length; i++)
             {
@@ -33,14 +33,14 @@ namespace ServerEmulator.Core.NetworkProtocol
             data.EncodeValue(11, 2047); //2047 is the highest number in 11 bits
         }
 
-        struct NPCListEntry
+        internal struct NPCListEntry
         {
             public int index, x, y;
             public bool effectUpdate, teleport;
             public int npcDef;
         }
 
-        static void WriteNewNPCList(ref List<bool> data, NPCListEntry[] newNPCs)
+        internal static void WriteNewNPCList(ref List<bool> data, NPCListEntry[] newNPCs)
         {
             for (int i = 0; i < newNPCs.Length; i++)
             {
@@ -55,7 +55,7 @@ namespace ServerEmulator.Core.NetworkProtocol
             data.EncodeValue(14, 16383); //max value
         }
 
-        static void WritePlayerMovement(ref List<bool> bits, bool effectUpdateRequired, 
+        internal static void WritePlayerMovement(ref List<bool> bits, bool effectUpdateRequired, 
             int firstX = -1, int secondY = -1, int planeSpawn = -1, bool teleport = false)
         {
             if (!effectUpdateRequired && firstX == -1) //no update
@@ -100,14 +100,16 @@ namespace ServerEmulator.Core.NetworkProtocol
             }
         }
 
-        struct EnityMovementUpdate
+        internal struct EntityMovementUpdate
         {
             public bool effectUpdateRequired;
+
             public int firstDirection, secondDirection;
             public bool shouldRemove;
         }
 
-        static void WriteEntityMovement(ref List<bool> data, EnityMovementUpdate[] entities)
+        //walking and removing of both players and npcs
+        internal static void WriteEntityMovement(ref List<bool> data, EntityMovementUpdate[] entities)
         {
             data.EncodeValue(8, entities.Length);
 
@@ -153,7 +155,7 @@ namespace ServerEmulator.Core.NetworkProtocol
             }
         }
 
-        public static void WritePlayerEffectUpdate(ref MemoryStream ms, PlayerEntity player)
+        internal static void WritePlayerEffectUpdate(ref MemoryStream ms, PlayerEntity player)
         {
             RSStreamWriter sw = new RSStreamWriter(ms);
 
@@ -164,7 +166,7 @@ namespace ServerEmulator.Core.NetworkProtocol
 
             if ((mask & (int)EffectMaskPlayer.APPEARANCE) == (int)EffectMaskPlayer.APPEARANCE)
             {
-                sw.WriteNegatedByte(0); //lenght
+                sw.WriteNegatedByte(0); //length
                 var startPos = sw.BaseStream.Position;
 
                 sw.WriteByte(player.gender);

@@ -547,7 +547,7 @@ namespace ServerEmulator.Core
 
         public static event Action Cleanup = delegate { };
 
-        /*
+        /* RSSharpEmulator
          * Server commands:
          * status = shows the status including listening port and bound socket; connected clients
          * online = lists online players
