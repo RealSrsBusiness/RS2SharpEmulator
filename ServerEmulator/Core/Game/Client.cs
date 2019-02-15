@@ -8,7 +8,6 @@ using System.IO;
 using static ServerEmulator.Core.Constants;
 using static ServerEmulator.Core.Game.Movement;
 using static ServerEmulator.Core.Game.WorldEntity;
-using static ServerEmulator.Core.Game.WorldEntity.PlayerEntity;
 
 namespace ServerEmulator.Core.Game
 {
@@ -30,7 +29,7 @@ namespace ServerEmulator.Core.Game
 
         public Client(Connection connection, Account account)
         {
-            connection.onDisconnect += (Connection c) => Disconnect();
+            connection.onDisconnect += (Connection c) => OnDisconnect();
             Packets = new StaticPackets(connection);
             customStates = DataLoader.CreateCustomStates();
 
@@ -41,11 +40,12 @@ namespace ServerEmulator.Core.Game
             if (Player.id == -1)
                 Program.Warning("Server Full");
 
-            Player.Update = Update;
             Player.appearanceValues = new int[] { -1, -1, -1, -1, 18, -1, 26, 36, 0, 33, 42, 10 };
             Player.colorValues = new int[] { 7, 8, 9, 5, 0 };
             Player.animations = new int[] { 808, 823, 819, 820, 821, 822, 824 };
-            Player.username = "Player".ToLong();
+            Player.username = account.displayname.ToLong();
+            Player.x = 3200;
+            Player.y = 3200;
 
             World.RegisterEntity(Player);
             loginTime = DateTime.Now;
@@ -61,7 +61,7 @@ namespace ServerEmulator.Core.Game
         public void RenderScreen()
         {
             var global = World.globalEntities;
-            var nearBy = new Dictionary<WorldEntity, Coordinate>();
+            var nearEntities = new List<(WorldEntity, Coordinate)>();
 
             //get nearest entities
             for (int i = 0; i < global.Count; i++)
@@ -69,8 +69,8 @@ namespace ServerEmulator.Core.Game
                 var entity = global[i];
                 var distance = entity.VerifyDistance(Player.x, Player.y);
 
-                if (distance != Coordinate.NONE)
-                    nearBy.Add(entity, distance);
+                if (distance != Coordinate.NONE && entity != Player)
+                    nearEntities.Add((entity, distance));
             }
 
             var toUpdateRemove = new List<EntityUpdates.EntityMovementUpdate>();
@@ -79,38 +79,32 @@ namespace ServerEmulator.Core.Game
             //remove old entities and update movement
             foreach (var local in localEntities)
             {
-                bool found = false;
-                foreach(var near in nearBy.Keys)
-                {
-                    if (near == local)
-                    {
-                        found = true;
-                        break;
-                    } 
-                }
-
-                bool remove = false;
-
-                if (!found)
-                {
-                    remove = true;
-                    localEntities.Remove(local);
-                }
+                var found = nearEntities.FindIndex(((WorldEntity, Coordinate) item) => item.Item1 == local);
 
                 var update = new EntityUpdates.EntityMovementUpdate();
-                update.shouldRemove = remove;
-                //get movement
+
+                if (found < 0) //local entity not found in nearEntities therefor delete it
+                {
+                    update.shouldRemove = true;
+                    localEntities.Remove(local);
+                }
+                else //otherwise just update movement
+                {
+                    var movement = ((PlayerEntity)local).lastSteps;
+                    update.firstDirection = (int)movement[0];
+                    update.secondDirection = (int)movement[1];
+                }
 
                 toUpdateRemove.Add(update);
             }
 
             //add new entities
-            foreach(var near in nearBy)
+            foreach(var near in nearEntities)
             {
-                var res = localEntities.Find((WorldEntity e) => e == near.Key);
-                if (res == null)
+                var res = localEntities.Find((WorldEntity e) => e == near.Item1);
+                if (res == null) //new entity which needs to be added to the locals
                 {
-                    var entity = near.Key;
+                    var entity = near.Item1;
 
                     var addPlayer = new EntityUpdates.PlayerListEntry();
                     addPlayer.index = entity.id;
@@ -128,36 +122,60 @@ namespace ServerEmulator.Core.Game
             List<bool> bits = new List<bool>();
 
             if (Player.justSpawned)
-                EntityUpdates.WritePlayerMovement(ref bits, Player.EffectUpdateRequired, Player.LocalX, Player.LocalY, Player.z, Player.teleported);
-            else if (Player.walkingQueue != -1)
             {
-                var nextStep = Player.movement[Player.walkingQueue];
-                EntityUpdates.WritePlayerMovement(ref bits, Player.EffectUpdateRequired, (int)nextStep);
+                EntityUpdates.WritePlayerMovement(ref bits, Player.HasEffectUpdate, Player.LocalX, Player.LocalY, Player.z, Player.teleported);
+                Player.justSpawned = false; //todo: move
             }
-
+            else
+            {
+                var steps = Player.GetMovementSteps();
+                EntityUpdates.WritePlayerMovement(ref bits, Player.HasEffectUpdate, (int)steps[0], (int)steps[1]);
+            }
             EntityUpdates.WriteEntityMovement(ref bits, toUpdateRemove.ToArray());
             EntityUpdates.WriteNewPlayerList(ref bits, toAdd.ToArray());
 
+            MemoryStream ms = new MemoryStream();
+            byte[] bitBuffer = bits.ToByteArray();
+            ms.Write(bitBuffer, 0, bitBuffer.Length);
 
+
+            if (Player.effectBuffer != null)
+            {
+                var bytes = Player.effectBuffer;
+                ms.Write(bytes, 0, bytes.Length);
+            }
+
+            foreach (var local in localEntities)
+            {
+                var player = (PlayerEntity)local;
+                if(player.effectBuffer != null)
+                {
+                    var bytes = player.effectBuffer;
+                    ms.Write(bytes, 0, bytes.Length);
+                }
+            }
 
             int mX = Player.LocalX, mY = Player.LocalY;
-            if (mX < 15 || mX > 88 || mY < 15 || mY > 88)
+            //if (mX < 15 || mX > 88 || mY < 15 || mY > 88)
+            if (mapUpdate)
+            {
                 Packets.LoadRegion(Player.RegionX, Player.RegionY);
+                mapUpdate = false;
+            }
 
-            Packets.PlayerUpdate(null);
-            Packets.NPCUpdate(null);
-            Packets.RegionalUpdate(null);
 
-            Packets.C.Send();
+
+            Packets.PlayerUpdate(ms.ToArray());
+
+            //Packets.NPCUpdate(null);
+            //Packets.RegionalUpdate(null);
+
+            Packets.Send();
         }
 
-        /// <summary>
-        /// Processes all queued up tasks
-        /// </summary>
-        private void Update()
-        {
+        bool mapUpdate = true;
 
-        }
+
 
         static int[] SIDE_BARS = { 2423, 3917, 638, 3213, 1644, 5608, 1151, -1, 5065, 5715, 2449, 904, 147, 962 };
 
@@ -205,26 +223,49 @@ namespace ServerEmulator.Core.Game
             Packets.SetPlayerContextMenu(1, false, "Attack");
             Packets.PlaySong(125);
 
-            Packets.C.Send();
+            Packets.Send();
         }
 
         public void SetMovement(Coordinate[] waypointCoords)
         {
             Player.movement = InterpolateWaypoints(waypointCoords, Player.x, Player.y);
-            Player.walkingQueue = 0;
+            if(Player.movement.Length > 0)
+                Player.walkingQueue = 0;
         }
 
-        public T GetState<T>(int index)
+        public T State<T>(int index)
         {
             return (T)customStates[index];
         }
 
-        public void Disconnect()
+        void OnDisconnect()
         {
-            Packets.Logout();
             FreePlayerSlot(Player.id);
             World.UnregisterEntity(Player);
         }
+
+        static int AllocPlayerSlot()
+        {
+            //find free player slot
+            int pId = -1;
+            for (int i = 0; i < playerSlots.Length; i++)
+            {
+                if (!playerSlots[i])
+                {
+                    pId = i;
+                    playerSlots[i] = true;
+                    break;
+                }
+            }
+            return pId;
+        }
+
+        static void FreePlayerSlot(int id)
+        {
+            playerSlots[id] = false;
+        }
+
+        static bool[] playerSlots = new bool[2047];
 
         private readonly object _lock = new object();
     }

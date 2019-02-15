@@ -22,16 +22,17 @@ namespace ServerEmulator.Core.Network
     {
         Socket host; //remote host
         public event ConnectionUpdate onDisconnect;
-        public PacketHandle handle { get; set; }
+        public PacketHandle handle { private get; set; }
 
         public RSStreamReader Reader { get; private set; } //allows reading from the stream
         public RSStreamWriter Writer { get; private set; } //allows writing to the stream
 
-        int OpCode = 0; //-1 means we expect next byte to be an opcode
+        int opCode = 0; //-1 means we expect next byte to be an opcode
         byte[] buffer = new byte[byte.MaxValue];
         int received = 0, expected = 0;
 
-        public ISAACRng inRng, outRng;
+        public ISAACRng inRng { private get; set; }
+        public ISAACRng outRng { private get; set; }
 
         public Connection(Socket host)
         {
@@ -49,7 +50,7 @@ namespace ServerEmulator.Core.Network
             {
                 if(expectedData < 0)
                 {
-                    OpCode = -1;
+                    opCode = -1;
                     expected = 1;
                 }
                 else
@@ -83,17 +84,17 @@ namespace ServerEmulator.Core.Network
             if (received >= expected)
             {
                 received = 0;
-                bool readOpCode = OpCode < 0;
+                bool readOpCode = opCode < 0;
 
                 if (readOpCode)
-                    OpCode = (byte)(buffer[0] - inRng.Next());
+                    opCode = (byte)(buffer[0] - inRng.Next());
                 else
                 {
                     Reader.BaseStream.Write(buffer, 0, expected);
                     Reader.BaseStream.Position = 0;
                 }
 
-                handle((byte)OpCode, readOpCode);
+                handle((byte)opCode, readOpCode);
             }
             else
             {
@@ -156,10 +157,15 @@ namespace ServerEmulator.Core.Network
 
         public void Dispose()
         {
-            Reader.BaseStream.Dispose();
-            Writer.BaseStream.Dispose();
-            host.Dispose();
-            onDisconnect(this);
+            if(Writer != null)
+            {
+                host.Dispose();
+                onDisconnect(this);
+                Reader.BaseStream.Dispose();
+                Writer.BaseStream.Dispose();
+                Writer = null;
+                Reader = null;
+            }
         }
 
         public string EndPoint { get; private set; }

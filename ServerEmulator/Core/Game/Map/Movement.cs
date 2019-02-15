@@ -111,7 +111,7 @@ namespace ServerEmulator.Core.Game
         public int x, y;
 
         public static Coordinate operator +(Coordinate c1, Coordinate c2) =>
-            new Coordinate() { x = c1.x + c2.y, y = c1.y + c2.y };
+            new Coordinate() { x = c1.x + c2.x, y = c1.y + c2.y };
 
         public static bool operator ==(Coordinate c1, Coordinate c2) => c1.x == c2.x && c1.y == c2.y;
         public static bool operator !=(Coordinate c1, Coordinate c2) => c1.x != c2.x || c1.y != c2.y;

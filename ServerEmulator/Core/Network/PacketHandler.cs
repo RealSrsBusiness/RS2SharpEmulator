@@ -9,6 +9,7 @@ namespace ServerEmulator.Core.Network
 {
     //delegate void Action();
 
+    //todo: review, use reflection to load packets
     class PacketHandler
     {
         Connection c;
@@ -21,7 +22,7 @@ namespace ServerEmulator.Core.Network
         public PacketHandler(Client client)
         {
             this.client = client;
-            c = client.Packets.C;
+            c = client.Packets.c;
 
             handles = new Action[Constants.INCOMING_SIZES.Length];
             handles[IDLE] = Idle;

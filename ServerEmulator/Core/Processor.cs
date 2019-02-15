@@ -41,17 +41,15 @@ namespace ServerEmulator.Core
             {
                 sw.Start();
 
-                //update all entities (actions, movement of players, npcs etc) and build packages
-                World.ProcessWorld(); //I don't think this is needed, can probably be combined with finalizeWorld()
+                //update all entities (actions, movement of players, npcs etc, effect updates)
+                World.ProcessWorld();
 
-                //update what all the clients see and send out packages
+                //update what all the clients see and send out packets
                 for (int i = 0; i < establishedClients.Count; i++)
                 {
                     Client client = establishedClients[i];
                     client.RenderScreen();
                 }
-
-                World.FinalizeWorld();
 
                 sw.Stop();
                 int remainingSleep = CYCLE_TIME - (int)sw.ElapsedMilliseconds;
@@ -62,7 +60,7 @@ namespace ServerEmulator.Core
                 else
                 {
                     delayedTicks++;
-                    Program.Warning("Server can't keep up. Delayed Ticks so far: {0}", delayedTicks);
+                    Program.Warning("Server can't keep up! Delayed ticks so far: {0}", delayedTicks);
                 }
                 sw.Reset();
             }
@@ -121,7 +119,7 @@ namespace ServerEmulator.Core
         void Disconnect_Client(Connection c)
         {
             connections.Remove(c);
-            establishedClients.RemoveAll(client => client.Packets.C == c);
+            establishedClients.RemoveAll(client => client.Packets.c == c);
             Program.Log("Connection lost {0}", c.EndPoint);
         }
     }

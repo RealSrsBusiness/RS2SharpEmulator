@@ -19,12 +19,12 @@ namespace ServerEmulator.Core.Game
         NOT_SET = -1, MALE = 0, FEMALE = 1
     }
 
-    struct Friend //todo: categories
-    {
+    /*struct Friend //todo: categories
+    { //+recent names
         public int userId;
         public string alias;
         public bool blocked;
-    }
+    }*/
 
     [Serializable]
     class Account
@@ -32,7 +32,7 @@ namespace ServerEmulator.Core.Game
         //static XmlSerializer serializer = new XmlSerializer(typeof(Account));
         //static SHA256 hashing = SHA256.Create();
 
-        string email, username, password, displayname, lastIp;
+        public string email, username, password, displayname, lastIp;
         DateTime registerDate, lastLogin, membership, mutedUntil, bannedUntil;
         public int gameTime; //time spent online in seconds
         public bool flagged; //flagged for cheating
@@ -48,12 +48,13 @@ namespace ServerEmulator.Core.Game
         public ItemStack[] bank = new ItemStack[300];
         public ItemStack[] inventory = new ItemStack[28];
         
-        public Friend[] friends = new Friend[250];
-        public string[] recentNames = new string[10];
+        public int[] friends = new int[200];
+        public int[] ignores = new int[100];
 
         public Account(string username, string displayname, string password, Rights rights = Rights.PLAYER)
         {
             this.username = username;
+            this.displayname = displayname;
             this.password = password;
             this.registerDate = DateTime.Now;
             this.lastLogin = DateTime.MinValue;

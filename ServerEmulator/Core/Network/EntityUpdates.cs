@@ -69,7 +69,7 @@ namespace ServerEmulator.Core.NetworkProtocol
             }
             else
             {
-                if(planeSpawn != -1) //movement update
+                if(planeSpawn == -1) //movement update
                 {
                     if(secondY != -1) //running
                     {
@@ -155,8 +155,11 @@ namespace ServerEmulator.Core.NetworkProtocol
             }
         }
 
-        internal static void WritePlayerEffectUpdate(ref MemoryStream ms, PlayerEntity player)
+        internal static byte[] BuildPlayerEffectUpdate(PlayerEntity player)
         {
+            if (!player.EffectUpdateRequired) return null;
+
+            MemoryStream ms = new MemoryStream(); //too expensive?
             RSStreamWriter sw = new RSStreamWriter(ms);
 
             int mask = 0x0;
@@ -211,6 +214,7 @@ namespace ServerEmulator.Core.NetworkProtocol
             }
 
             player.effectUpdateMask = EffectMaskPlayer.NONE;
+            return ms.ToArray();
         }
 
     }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ServerEmulator.Core.NetworkProtocol;
+using System;
 using static ServerEmulator.Core.Game.Movement;
 
 namespace ServerEmulator.Core.Game
@@ -8,7 +9,7 @@ namespace ServerEmulator.Core.Game
         public int id;
         public int x, y, z;
 
-        public Action Update;
+        public Action Update = delegate { };
 
         public ushort RegionX { get { return (ushort)(x >> 3); } }
         public ushort RegionY { get { return (ushort)(y >> 3); } }
@@ -29,14 +30,12 @@ namespace ServerEmulator.Core.Game
             return new Coordinate() { x = difX, y = difY };
         }
 
-        public virtual void Process() { }
-
         public class PlayerEntity : WorldEntity
         {
             public EffectMaskPlayer effectUpdateMask = EffectMaskPlayer.NONE;
             public bool justSpawned, running = true, teleported = false;
 
-            public Direction[] movement = new Direction[0];
+            public Direction[] movement = new Direction[0], lastSteps = null;
             public int walkingQueue = -1;
 
             public byte gender = 0, headicon = 0;
@@ -46,11 +45,12 @@ namespace ServerEmulator.Core.Game
             public int[] colorValues;
             public int[] animations;
 
-            public byte[] effectBuffer = null;
+            public byte[] effectBuffer { get; set; }
 
             public byte CombatLevel { get { return 3; } }
             public ushort Skill { get { return 0; } }
             public bool EffectUpdateRequired { get { return effectUpdateMask != EffectMaskPlayer.NONE; } }
+            public bool HasEffectUpdate { get { return effectBuffer != null; } }
 
             public enum EffectMaskPlayer : int
             {
@@ -67,41 +67,43 @@ namespace ServerEmulator.Core.Game
                 DAMAGE2 = 0x200 //damage, type, curHealth, maxHealth
             }
 
-            public override void Process()
+            public Direction[] GetMovementSteps()
             {
-                if(walkingQueue != -1)
+                return lastSteps;
+            }
+
+            public PlayerEntity()
+            {
+                effectUpdateMask = EffectMaskPlayer.APPEARANCE;
+                justSpawned = true;
+
+                Update = () =>
                 {
-                    walkingQueue++;
-                    if(walkingQueue >= movement.Length)
+                    lastSteps = new Direction[2] { Direction.NONE, Direction.NONE };
+
+                    if (walkingQueue != -1)
                     {
-                        walkingQueue = -1;
+                        
+                        lastSteps[0] = movement[walkingQueue++];
+                        Coordinate moved = Movement.Directions[(int)lastSteps[0]];
+                        if (running && walkingQueue < movement.Length)
+                        {
+                            lastSteps[1] = movement[walkingQueue++];
+
+                            Coordinate moved2 = Movement.Directions[(int)lastSteps[1]];
+                            moved += moved2;
+                        } 
+                        if (walkingQueue >= movement.Length)
+                            walkingQueue = -1;
+                        x += moved.x;
+                        y += moved.y;
                     }
-                }
+
+                    effectBuffer = EntityUpdates.BuildPlayerEffectUpdate(this);
+                };
+
+
             }
-
-            public static int AllocPlayerSlot()
-            {
-                //find free player slot
-                int pId = -1;
-                for (int i = 0; i < playerSlots.Length; i++)
-                {
-                    if (!playerSlots[i])
-                    {
-                        pId = i;
-                        playerSlots[i] = true;
-                        break;
-                    }
-                }
-                return pId;
-            }
-
-            public static void FreePlayerSlot(int id)
-            {
-                playerSlots[id] = false;
-            }
-
-            static bool[] playerSlots = new bool[2047];
-
 
         }
 

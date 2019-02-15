@@ -2,6 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Collections;
+using System.Linq;
+using static ServerEmulator.Core.Game.WorldEntity;
 
 namespace ServerEmulator.Core.Game
 {
@@ -49,13 +52,7 @@ namespace ServerEmulator.Core.Game
         public static void ProcessWorld()
         {
             for (int i = 0; i < globalEntities.Count; i++)
-                globalEntities[i].Update?.Invoke();
-        }
-
-        public static void FinalizeWorld()
-        {
-            for (int i = 0; i < globalEntities.Count; i++)
-                globalEntities[i].Process();
+                globalEntities[i].Update();
         }
 
         //if region is set, this entity will only be updated if it's seen by a client in that region
@@ -69,7 +66,22 @@ namespace ServerEmulator.Core.Game
             globalEntities.Remove(entity);
         }
 
-        public static List<WorldEntity> globalEntities = new List<WorldEntity>();
+        public static T[] FindEntities<T>(EntityFilter<T> filter, Region region = null, int limit = 1) where T : WorldEntity
+        {
+            List<T> result = new List<T>();
+            for (int i = 0; i < globalEntities.Count; i++)
+            {
+                var entity = globalEntities[i];
+                if (entity is T && filter((T)entity))
+                    result.Add((T)entity);
+                if (result.Count >= limit)
+                    break;
+            }
+            return result.ToArray();
+        }
 
+        public static List<WorldEntity> globalEntities = new List<WorldEntity>();
     }
+
+    delegate bool EntityFilter<T>(T we) where T : WorldEntity;
 }

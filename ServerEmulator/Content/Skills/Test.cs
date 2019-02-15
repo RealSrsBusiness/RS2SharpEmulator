@@ -1,6 +1,7 @@
 ﻿using ServerEmulator.Core.Game;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -28,7 +29,7 @@ namespace ServerEmulator.Content.Skills
 
                 Objects[i].OnAction[0] = (Client c) =>
                 {
-                    c.GetState<Cxt>(0).test = 66;
+                    c.State<Cxt>(0).test = 66;
 
                     c.State().test = 66;
 
@@ -37,7 +38,7 @@ namespace ServerEmulator.Content.Skills
 
                 };
 
-
+                Task.Run(() => Console.WriteLine("hello world"));
 
                 var task = Task.Factory.StartNew(() =>
                 {
@@ -46,6 +47,7 @@ namespace ServerEmulator.Content.Skills
 
                 Task.WaitAll(task);
                 var res = task.Result;
+
 
 
                 int? hhh = 66;
@@ -68,11 +70,15 @@ namespace ServerEmulator.Content.Skills
                 t.Start();
                 t.Join();
 
+
+                MemoryStream[] u = new MemoryStream[100];
+
+                u.Last();
+                u.First();
+                u.Random();
+
                 WebClient wc = new WebClient();
                 wc.DownloadStringAsync(new Uri("sdffsddf"));
-
-            
-                
 
             }
         }
@@ -83,7 +89,7 @@ namespace ServerEmulator.Content.Skills
         public int test;
     }
 
-    static class Ex { public static Cxt State(this Client c) => c.GetState<Cxt>(0); }
+    static class Ex { public static Cxt State(this Client c) => c.State<Cxt>(0); }
 
     static class Ex2 {
         static Random ran = new Random();
