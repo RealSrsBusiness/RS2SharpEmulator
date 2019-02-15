@@ -467,6 +467,7 @@ namespace ServerEmulator.Core
 
         static void Main(string[] args)
         {
+
             Console.Title = "Server Emulator Rev #" + Constants.SERVER_REV;
 
             for (int i = 0; i < args.Length; i++)

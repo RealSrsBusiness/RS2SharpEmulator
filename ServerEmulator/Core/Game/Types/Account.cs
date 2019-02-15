@@ -9,16 +9,6 @@ using static ServerEmulator.Core.Constants;
 
 namespace ServerEmulator.Core.Game
 {
-    struct ItemStack
-    {
-        public int id, amount;
-    }
-
-    struct Skill
-    {
-        public int level, xp;
-    }
-
     enum Rights : byte
     {
         PLAYER = 0, MODERATOR = 1, ADMIN = 2

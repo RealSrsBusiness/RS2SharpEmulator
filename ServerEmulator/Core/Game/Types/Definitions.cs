@@ -6,6 +6,7 @@ using System.Text;
 namespace ServerEmulator.Core.Game
 {
     delegate void Interaction(Client c);
+    delegate void Update(WorldEntity entity);
 
     class Definition
     {
@@ -31,5 +32,7 @@ namespace ServerEmulator.Core.Game
     class NPC : Definition
     {
         int combat, health;
+
+        public Update OnUpdate;
     }
 }

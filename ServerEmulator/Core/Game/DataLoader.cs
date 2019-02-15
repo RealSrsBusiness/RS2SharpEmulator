@@ -52,7 +52,7 @@ namespace ServerEmulator.Core.Game
 
         private static void Scripts()
         {
-            var csharp = new CSharpCodeProvider();
+            //var csharp = new CSharpCodeProvider();
 
         }
 
