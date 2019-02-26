@@ -77,7 +77,7 @@ namespace ServerEmulator.Core.Game
             var toAdd = new List<EntityUpdates.PlayerListEntry>();
 
             //remove old entities and update movement
-            foreach (var local in localEntities)
+            foreach (var local in localEntities.ToArray())
             {
                 var found = nearEntities.FindIndex(((WorldEntity, Coordinate) item) => item.Item1 == local);
 
@@ -99,17 +99,18 @@ namespace ServerEmulator.Core.Game
             }
 
             //add new entities
-            foreach(var near in nearEntities)
+            foreach(var near in nearEntities.ToArray())
             {
                 var res = localEntities.Find((WorldEntity e) => e == near.Item1);
                 if (res == null) //new entity which needs to be added to the locals
                 {
                     var entity = near.Item1;
+                    var distance = near.Item2;
 
                     var addPlayer = new EntityUpdates.PlayerListEntry();
                     addPlayer.index = entity.id;
-                    addPlayer.x = entity.LocalX;
-                    addPlayer.y = entity.LocalY;
+                    addPlayer.x = distance.x;
+                    addPlayer.y = distance.y;
                     //addPlayer.teleport = entity.teleport;
                     //addPlayer.effectUpdate = entity.effect;
 
@@ -145,7 +146,7 @@ namespace ServerEmulator.Core.Game
                 ms.Write(bytes, 0, bytes.Length);
             }
 
-            foreach (var local in localEntities)
+            foreach (var local in localEntities.ToArray())
             {
                 var player = (PlayerEntity)local;
                 if(player.effectBuffer != null)
@@ -155,14 +156,18 @@ namespace ServerEmulator.Core.Game
                 }
             }
 
-            int mX = Player.LocalX, mY = Player.LocalY;
-            //if (mX < 15 || mX > 88 || mY < 15 || mY > 88)
-            if (mapUpdate)
-            {
-                Packets.LoadRegion(Player.RegionX, Player.RegionY);
-                mapUpdate = false;
-            }
+            //how far are we from the region origin?
+            movedX = Player.x - regionOriginX;
+            movedY = Player.y - regionOriginY;
 
+            //if we moved too far, we need to load a new map.
+            if(movedX < -35 || movedX > 42 || movedY < -35 || movedY > 42)
+            {
+                regionOriginX = Player.RegionX << 3;
+                regionOriginY = Player.RegionY << 3;
+
+                Packets.LoadRegion(Player.RegionX, Player.RegionY);
+            }
 
 
             Packets.PlayerUpdate(ms.ToArray());
@@ -173,8 +178,8 @@ namespace ServerEmulator.Core.Game
             Packets.Send();
         }
 
-        bool mapUpdate = true;
-
+        int regionOriginX = 0, regionOriginY = 0;
+        int movedX = 0, movedY = 0;
 
 
         static int[] SIDE_BARS = { 2423, 3917, 638, 3213, 1644, 5608, 1151, -1, 5065, 5715, 2449, 904, 147, 962 };
@@ -227,7 +232,7 @@ namespace ServerEmulator.Core.Game
         }
 
         public void SetMovement(Coordinate[] waypointCoords)
-        {
+        { //todo: pretty sure this causes a race condition
             Player.movement = InterpolateWaypoints(waypointCoords, Player.x, Player.y);
             if(Player.movement.Length > 0)
                 Player.walkingQueue = 0;

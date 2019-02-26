@@ -103,7 +103,7 @@ namespace ServerEmulator.Core.Game
     {
         public int x, y, z;
         public static Coordinate3 operator +(Coordinate3 c1, Coordinate3 c2) =>
-            new Coordinate3() { x = c1.x + c2.y, y = c1.y + c2.y, z = c1.z + c2.z };
+            new Coordinate3() { x = c1.x + c2.x, y = c1.y + c2.y, z = c1.z + c2.z };
     }
 
     public struct Coordinate

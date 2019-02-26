@@ -19,7 +19,9 @@ namespace ServerEmulator.Core.Game
     class GameObject : Definition
     {
         int clippingMask;
-        bool hasToBeClose;
+        bool projectilesPassThrough;
+        bool hasToBeClose; //based on actions?
+        //size?
     }
 
     class Item : Definition

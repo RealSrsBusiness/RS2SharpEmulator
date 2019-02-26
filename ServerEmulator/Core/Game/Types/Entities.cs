@@ -30,6 +30,11 @@ namespace ServerEmulator.Core.Game
             return new Coordinate() { x = difX, y = difY };
         }
 
+        public class Actor : WorldEntity
+        {
+
+        }
+
         public class PlayerEntity : WorldEntity
         {
             public EffectMaskPlayer effectUpdateMask = EffectMaskPlayer.NONE;
@@ -83,15 +88,12 @@ namespace ServerEmulator.Core.Game
 
                     if (walkingQueue != -1)
                     {
-                        
                         lastSteps[0] = movement[walkingQueue++];
                         Coordinate moved = Movement.Directions[(int)lastSteps[0]];
                         if (running && walkingQueue < movement.Length)
                         {
                             lastSteps[1] = movement[walkingQueue++];
-
-                            Coordinate moved2 = Movement.Directions[(int)lastSteps[1]];
-                            moved += moved2;
+                            moved += Movement.Directions[(int)lastSteps[1]];
                         } 
                         if (walkingQueue >= movement.Length)
                             walkingQueue = -1;

@@ -16,7 +16,7 @@ namespace ServerEmulator.Core.Network
         public enum Type : int { BYTE = 1, SHORT = 2 }
     }
 
-    //toadd: encryption, connection timeout, limit login tries? disconnect when too much data is sent (ddos protection)
+    //toadd: encryption, connection timeout, limit login tries? disconnect when too much data is sent (flood protection)
     //check for connection lost, valid data received, too much data received (put on a timer?)
     class Connection : IDisposable
     {

@@ -53,6 +53,12 @@ namespace ServerEmulator.Content.Skills
                 int? hhh = 66;
 
 
+                int[] iiii = new int[5555];
+                object o = iiii;
+
+                int[] back = (int[])o;
+
+
                 
 
                 int i5 = 0;
@@ -66,6 +72,13 @@ namespace ServerEmulator.Content.Skills
                 {
 
                 }));
+
+                var gg = localFunction();
+
+                bool localFunction()
+                {
+                    return true;
+                }
 
                 t.Start();
                 t.Join();
