@@ -92,6 +92,7 @@ namespace ServerEmulator.Core.Network
 
                 int uId = c.Reader.ReadInt();
 
+                //todo: RSA encryption
                 string username = c.Reader.ReadString();
                 string password = c.Reader.ReadString();
 

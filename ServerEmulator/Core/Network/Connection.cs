@@ -16,7 +16,7 @@ namespace ServerEmulator.Core.Network
         public enum Type : int { BYTE = 1, SHORT = 2 }
     }
 
-    //toadd: encryption, connection timeout, limit login tries? disconnect when too much data is sent (flood protection)
+    //toadd: encryption, connection timeout, limit login tries? disconnect when too much data is sent (flood protection), limit connections per ip
     //check for connection lost, valid data received, too much data received (put on a timer?)
     class Connection : IDisposable
     {
@@ -63,8 +63,9 @@ namespace ServerEmulator.Core.Network
 
                 host.BeginReceive(buffer, received, expected - received, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
             }
-            catch(Exception)
+            catch(Exception ex)
             {
+                Program.Debug(ex.StackTrace);
                 Dispose();
             }
         }

@@ -11,13 +11,14 @@ namespace ServerEmulator.Core
         public const int SUB_CYCLES = 2;
         public const int MAX_CONNECTIONS = 3072;
         public const int MAX_PLAYER = 2048;
+        public const int MAX_PLAYERS_FOR_ADDRESS = 5;
         public const int SERVER_REV = 317;
         public const bool ENABLE_RSA_ENCRYPTION = false;
 
-        public const string SERVER_NAME = "C# Server Emulator";
+        public const string SERVER_NAME = "RS2SharpEmulator";
         public const string WELCOME_MSG = "Welcome to " + SERVER_NAME;
         public const int SPAWN_X = 3200, SPAWN_Y = 3200;
-        public const bool VERIFY_OBJECTS = false, PRELOAD_MAP = false;
+        public const byte MAP_LOADING_METHOD = 0; //0 = don't load, 1 = lazy load, 2 = preload complete map
 
         public const string DATA_PATH = "data\\";
         public const string PLUGIN_PATH = DATA_PATH + "plugins\\";
@@ -187,11 +188,11 @@ namespace ServerEmulator.Core
             public const byte INTF_MODEL_ROTATE = 230;
             public const byte INTF_MODEL_ZOOM = 246;
             public const byte INTF_CHAT_ADD = 164;
-            public const byte INTF_HIDDEN = 171;
+            public const byte INTF_HIDDEN = 171; //hidden component state
             public const byte INTF_WALKABLE = 208;
             public const byte INTF_INV_HUD = 248;
             public const byte INTF_INV_REPLACE = 142;
-            public const byte INTF_OFFSET = 70;
+            public const byte INTF_OFFSET = 70; //hide and show segment?, used for special bar in PI
             public const byte INTF_SCROLL_SET = 79;
             public const byte INTF_ENTER_NAME = 187;
             public const byte INTF_ENTER_AMT = 27;

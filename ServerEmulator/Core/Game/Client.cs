@@ -6,8 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using static ServerEmulator.Core.Constants;
-using static ServerEmulator.Core.Game.Movement;
-using static ServerEmulator.Core.Game.WorldEntity;
+using static ServerEmulator.Core.Game.PlayerEntity;
 
 namespace ServerEmulator.Core.Game
 {
@@ -17,7 +16,6 @@ namespace ServerEmulator.Core.Game
     class Client
     {
         public StaticPackets Packets { get; private set; }
-
         public PlayerEntity Player { get; private set; }
         public Account Account { get; private set; }
 
@@ -29,157 +27,118 @@ namespace ServerEmulator.Core.Game
 
         public Client(Connection connection, Account account)
         {
+            this.Account = account;
             connection.onDisconnect += (Connection c) => OnDisconnect();
             Packets = new StaticPackets(connection);
             customStates = DataLoader.CreateCustomStates();
 
-            Account = account;
-            Player = new PlayerEntity();
-            Player.id = AllocPlayerSlot();
+            var playerSlot = AllocPlayerSlot();
 
-            if (Player.id == -1)
-                Program.Warning("Server Full");
+            if(playerSlot != -1) 
+            {
+                Player = new PlayerEntity(playerSlot, new PlayerAppearance 
+                {
+                    appearanceValues = new int[] { -1, -1, -1, -1, 18, -1, 26, 36, 0, 33, 42, 10 },
+                    colorValues = new int[] { 7, 8, 9, 5, 0 },
+                    idleAnimations = new int[] { 808, 823, 819, 820, 821, 822, 824 },
+                    username = account.displayname.ToLong()
+                });
 
-            Player.appearanceValues = new int[] { -1, -1, -1, -1, 18, -1, 26, 36, 0, 33, 42, 10 };
-            Player.colorValues = new int[] { 7, 8, 9, 5, 0 };
-            Player.animations = new int[] { 808, 823, 819, 820, 821, 822, 824 };
-            Player.username = account.displayname.ToLong();
-            Player.x = 3200;
-            Player.y = 3200;
+                Player.x = 3200;
+                Player.y = 3200;
 
-            World.RegisterEntity(Player);
-            loginTime = DateTime.Now;
+                World.RegisterEntity(Player);
+                loginTime = DateTime.Now;
 
-            Init();
+                Init();
+            }
+            else 
+            {
+                Program.Warning("Server Full.");
+                //todo: properly disconnect, send response code.
+            }
         }
 
-        List<WorldEntity> localEntities = new List<WorldEntity>();
+        PlayerEntity[] localEntityList = new PlayerEntity[0];
+        int[] playerIdList, npcIdList;
 
         /// <summary>
         /// Builds all update packages that hold the current "screen" state
         /// </summary>
         public void RenderScreen()
         {
-            var global = World.globalEntities;
-            var nearEntities = new List<(WorldEntity, Coordinate)>();
+            //var blah = new { blub = 100, test = "string" };
 
-            //get nearest entities
-            for (int i = 0; i < global.Count; i++)
-            {
-                var entity = global[i];
-                var distance = entity.VerifyDistance(Player.x, Player.y);
+            var newNearEntities = World.FindEntities<PlayerEntity>((PlayerEntity we) => {
+                return we.VerifyDistance(Player.x, Player.y) != Coordinate.NONE && we.id != Player.id;
+            }, -1);
 
-                if (distance != Coordinate.NONE && entity != Player)
-                    nearEntities.Add((entity, distance));
-            }
+            var changes = localEntityList.Difference<PlayerEntity>(newNearEntities);
 
-            var toUpdateRemove = new List<EntityUpdates.EntityMovementUpdate>();
-            var toAdd = new List<EntityUpdates.PlayerListEntry>();
+            //todo: do something with the changes.
+         
+            localEntityList = newNearEntities; //swap old entity list with new one
 
-            //remove old entities and update movement
-            foreach (var local in localEntities.ToArray())
-            {
-                var found = nearEntities.FindIndex(((WorldEntity, Coordinate) item) => item.Item1 == local);
+            CheckRegionChange();
+            
 
-                var update = new EntityUpdates.EntityMovementUpdate();
-
-                if (found < 0) //local entity not found in nearEntities therefor delete it
-                {
-                    update.shouldRemove = true;
-                    localEntities.Remove(local);
-                }
-                else //otherwise just update movement
-                {
-                    var movement = ((PlayerEntity)local).lastSteps;
-                    update.firstDirection = (int)movement[0];
-                    update.secondDirection = (int)movement[1];
-                }
-
-                toUpdateRemove.Add(update);
-            }
-
-            //add new entities
-            foreach(var near in nearEntities.ToArray())
-            {
-                var res = localEntities.Find((WorldEntity e) => e == near.Item1);
-                if (res == null) //new entity which needs to be added to the locals
-                {
-                    var entity = near.Item1;
-                    var distance = near.Item2;
-
-                    var addPlayer = new EntityUpdates.PlayerListEntry();
-                    addPlayer.index = entity.id;
-                    addPlayer.x = distance.x;
-                    addPlayer.y = distance.y;
-                    //addPlayer.teleport = entity.teleport;
-                    //addPlayer.effectUpdate = entity.effect;
-
-                    toAdd.Add(addPlayer);
-                    localEntities.Add(entity);
-                }
-            }
-
-            //write updates
+            /* Player Updating Process:
+             * 0: update the movement of the own player and/or update effects if needed
+             * 1: update movement of other players that are in the player list, determine if effect updates are needed or players need to be removed
+             * 2: add new players to the player list, determine if an effect update is needed, load the appearance (not effects!) if it's still buffered
+             * 3: we now know what players need effect updates, parse and apply all effects to own player and other players
+             */
             List<bool> bits = new List<bool>();
+            var effectUpdates = new RSStreamWriter(new MemoryStream());
+            var appearEffect = Player.effects[APPEARANCE_CHANGED];
 
-            if (Player.justSpawned)
+
+            if(!Player.teleported) 
             {
-                EntityUpdates.WritePlayerMovement(ref bits, Player.HasEffectUpdate, Player.LocalX, Player.LocalY, Player.z, Player.teleported);
-                Player.justSpawned = false; //todo: move
+                var steps = Player.LastSteps;
+                EntityUpdates.LocalPlayerMovement(ref bits, appearEffect.Changed, (int)steps[0], (int)steps[1]);
             }
-            else
-            {
-                var steps = Player.GetMovementSteps();
-                EntityUpdates.WritePlayerMovement(ref bits, Player.HasEffectUpdate, (int)steps[0], (int)steps[1]);
-            }
-            EntityUpdates.WriteEntityMovement(ref bits, toUpdateRemove.ToArray());
-            EntityUpdates.WriteNewPlayerList(ref bits, toAdd.ToArray());
-
-            MemoryStream ms = new MemoryStream();
-            byte[] bitBuffer = bits.ToByteArray();
-            ms.Write(bitBuffer, 0, bitBuffer.Length);
-
-
-            if (Player.effectBuffer != null)
-            {
-                var bytes = Player.effectBuffer;
-                ms.Write(bytes, 0, bytes.Length);
+            else 
+            { //either teleported or logged in, when logged in changed
+                EntityUpdates.LocalPlayerTeleported(ref bits, appearEffect.Changed, Player.LocalX, Player.LocalY, Player.z);
+                Player.teleported = false;
             }
 
-            foreach (var local in localEntities.ToArray())
-            {
-                var player = (PlayerEntity)local;
-                if(player.effectBuffer != null)
-                {
-                    var bytes = player.effectBuffer;
-                    ms.Write(bytes, 0, bytes.Length);
-                }
-            }
+            Player.WriteEffects(effectUpdates);
 
+
+            var otherMovement = new EntityUpdates.OtherEntitiesMovement(bits);
+            var playerList = new EntityUpdates.NewPlayerList(bits);
+
+            otherMovement.Finish();
+            playerList.Finish();
+
+
+            Packets.PlayerUpdate(bits, effectUpdates.BaseStream.ToArray()); //81
+            //Packets.NPCUpdate(null); //65
+            //Packets.RegionalUpdate(null); //60
+
+            Packets.Send();
+        }
+
+
+        int regionOriginX = 0, regionOriginY = 0;
+        //int movedX = 0, movedY = 0;
+        private void CheckRegionChange()
+        {
             //how far are we from the region origin?
-            movedX = Player.x - regionOriginX;
-            movedY = Player.y - regionOriginY;
+            int movedX = Player.x - regionOriginX;
+            int movedY = Player.y - regionOriginY;
 
-            //if we moved too far, we need to load a new map.
-            if(movedX < -35 || movedX > 42 || movedY < -35 || movedY > 42)
+            //if we moved far enough, we need to load a new map.
+            if (movedX < -35 || movedX > 42 || movedY < -35 || movedY > 42)
             {
                 regionOriginX = Player.RegionX << 3;
                 regionOriginY = Player.RegionY << 3;
 
                 Packets.LoadRegion(Player.RegionX, Player.RegionY);
             }
-
-
-            Packets.PlayerUpdate(ms.ToArray());
-
-            //Packets.NPCUpdate(null);
-            //Packets.RegionalUpdate(null);
-
-            Packets.Send();
         }
-
-        int regionOriginX = 0, regionOriginY = 0;
-        int movedX = 0, movedY = 0;
 
 
         static int[] SIDE_BARS = { 2423, 3917, 638, 3213, 1644, 5608, 1151, -1, 5065, 5715, 2449, 904, 147, 962 };
@@ -204,7 +163,7 @@ namespace ServerEmulator.Core.Game
 
             Packets.SetFriend("TestFriend", 80);
             Packets.FriendList(2);
-            Packets.SetInterfaceText(2426, "A Weapon");
+            Packets.SetInterfaceText(2426, "Some Weapon");
 
             //ItemStack[] inv = new ItemStack[28];
 
@@ -214,7 +173,7 @@ namespace ServerEmulator.Core.Game
             ItemStack[] inv = new ItemStack[3];
             inv[0] = new ItemStack() { id = 1511, amount = 1 };
             inv[1] = new ItemStack() { id = 590, amount = 1 };
-            inv[2] = new ItemStack() { id = 1205, amount = 1 };
+            inv[2] = new ItemStack() { id = 882, amount = 1 };
 
             Packets.SetItems(3214, inv); //inventory
 
@@ -228,14 +187,9 @@ namespace ServerEmulator.Core.Game
             Packets.SetPlayerContextMenu(1, false, "Attack");
             Packets.PlaySong(125);
 
-            Packets.Send();
-        }
+            Packets.WelcomeMessage(201, 2222, false, 100100, 6666);
 
-        public void SetMovement(Coordinate[] waypointCoords)
-        { //todo: pretty sure this causes a race condition
-            Player.movement = InterpolateWaypoints(waypointCoords, Player.x, Player.y);
-            if(Player.movement.Length > 0)
-                Player.walkingQueue = 0;
+            Packets.Send();
         }
 
         public T State<T>(int index)
@@ -249,28 +203,25 @@ namespace ServerEmulator.Core.Game
             World.UnregisterEntity(Player);
         }
 
-        static int AllocPlayerSlot()
+        public static int AllocPlayerSlot() //find free player slot
         {
-            //find free player slot
-            int pId = -1;
             for (int i = 0; i < playerSlots.Length; i++)
             {
                 if (!playerSlots[i])
                 {
-                    pId = i;
                     playerSlots[i] = true;
-                    break;
+                    return i;
                 }
             }
-            return pId;
+            return -1;
         }
 
-        static void FreePlayerSlot(int id)
+        public static void FreePlayerSlot(int id)
         {
             playerSlots[id] = false;
         }
 
-        static bool[] playerSlots = new bool[2047];
+        static bool[] playerSlots = new bool[Constants.MAX_PLAYER];
 
         private readonly object _lock = new object();
     }

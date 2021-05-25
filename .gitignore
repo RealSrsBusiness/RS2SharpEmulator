@@ -243,3 +243,5 @@ ModelManifest.xml
 /PluginTest
 /notes-updating.txt
 /todo.txt
+.vscode
+removed.txt

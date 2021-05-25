@@ -19,22 +19,14 @@ namespace ServerEmulator.Core.Game
         NOT_SET = -1, MALE = 0, FEMALE = 1
     }
 
-    /*struct Friend //todo: categories
-    { //+recent names
-        public int userId;
-        public string alias;
-        public bool blocked;
-    }*/
-
     [Serializable]
-    class Account
+    class Account //todo: friends with custom name aliases, displayname history, blocked list, muted list,
     {
         //static XmlSerializer serializer = new XmlSerializer(typeof(Account));
         //static SHA256 hashing = SHA256.Create();
-
         public string email, username, password, displayname, lastIp;
         DateTime registerDate, lastLogin, membership, mutedUntil, bannedUntil;
-        public int gameTime; //time spent online in seconds
+        public int gameTime, timesLoggedIn; //time spent online in seconds
         public bool flagged; //flagged for cheating
         public Rights rights;
         public Gender gender = Gender.NOT_SET;
@@ -65,6 +57,7 @@ namespace ServerEmulator.Core.Game
                 Skill s = new Skill() { level = 50, xp = 105000 };
                 skills[i] = s;
             }
+
         }
 
         public static Account Load(string username, string password, out sbyte response)
@@ -80,12 +73,12 @@ namespace ServerEmulator.Core.Game
         public static void Save(Account a)
         {
             FileStream fs = new FileStream(ACCOUNT_PATH + a.username + ".xml", FileMode.Create);
-     
+
             //serializer.Serialize(fs, a);
         }
 
-        public bool IsMuted { get { return false; } }
-        public bool IsBanned { get { return false; } }
-        public bool IsMembers { get { return true; } }
+        public bool IsMuted => DateTime.Now < mutedUntil;
+        public bool IsBanned => DateTime.Now < bannedUntil;
+        public bool IsMembers => DateTime.Now < membership;
     }
 }

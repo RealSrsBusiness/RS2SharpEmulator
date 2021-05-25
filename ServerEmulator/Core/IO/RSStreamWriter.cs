@@ -128,7 +128,6 @@ namespace ServerEmulator.Core.IO
         }
 
         //alternative names
-
         public void WriteWord(int i) { WriteShort(i); }
 
         public void WriteDWord(int i) { WriteInt(i); }

@@ -44,14 +44,12 @@ namespace ServerEmulator.Core
                 //update all entities (actions, movement of players, npcs etc, effect updates)
                 World.ProcessWorld();
 
-                //update what all the clients see and send out packets
-                for (int i = 0; i < establishedClients.Count; i++)
-                {
-                    Client client = establishedClients[i];
+                //update what all the clients see and send out packets, todo: this can be parallelized, since no writing is done at this point
+                foreach(var client in establishedClients)
                     client.RenderScreen();
-                }
 
                 sw.Stop();
+                
                 int remainingSleep = CYCLE_TIME - (int)sw.ElapsedMilliseconds;
                 if (remainingSleep > 0)
                 {

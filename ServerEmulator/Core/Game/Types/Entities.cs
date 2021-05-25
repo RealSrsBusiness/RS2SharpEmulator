@@ -1,10 +1,124 @@
 ﻿using ServerEmulator.Core.NetworkProtocol;
 using System;
-using static ServerEmulator.Core.Game.Movement;
+using System.IO;
+using ServerEmulator.Core.IO;
 
 namespace ServerEmulator.Core.Game
 {
-    class WorldEntity
+    public class PlayerEntity : Actor, ICloneable
+    {
+        public bool teleported = true, running = true;
+        public Direction[] LastSteps { get; private set; } = new Direction[2] { Direction.NONE, Direction.NONE };
+
+        Direction[] movement;
+        int walkingQueue = -1;
+
+        internal AccessWatcher[] effects = new AccessWatcher[masks.Length];
+
+        internal PlayerEntity(int id, PlayerAppearance initAppearance)
+        {
+            effects[APPEARANCE_CHANGED] = new AccessWatcher(initAppearance, true);
+            effects[DAMAGE] = new AccessWatcher(new PlayerDamage());
+            effects[CHAT_TEXT] = new AccessWatcher(new PlayerChat());
+            effects[ANIMATION] = new AccessWatcher(new PlayerAnimation());
+
+            Update = () =>
+            {
+                lock(_lock)
+                {
+                    LastSteps[0] = Direction.NONE;
+                    LastSteps[1] = Direction.NONE;
+
+                    if (walkingQueue != -1)
+                    {
+                        LastSteps[0] = movement[walkingQueue++];
+                        Coordinate moved = Movement.Directions[(int)LastSteps[0]];
+
+                        if (running && walkingQueue < movement.Length)
+                        {
+                            LastSteps[1] = movement[walkingQueue++];
+                            moved += Movement.Directions[(int)LastSteps[1]];
+                        }
+
+                        if (walkingQueue >= movement.Length)
+                            walkingQueue = -1;
+
+                        x += moved.x;
+                        y += moved.y;
+                    }
+                }
+            };
+        }
+
+        internal void WriteEffects(RSStreamWriter data) 
+        {
+            int mask = 0x0;
+
+            for (int i = 0; i < effects.Length; i++)
+            {
+                var effect = effects[i];
+                if(effect == null)
+                    continue;
+                    
+                mask |= masks[i];
+                effect.Value<Effect>().Write(data);
+            }
+        }
+
+        public void SetMovement(Coordinate[] waypointCoords) //todo: sometimes causes a race condition
+        {
+            lock(_lock)
+            {
+                movement = Movement.InterpolateWaypoints(waypointCoords, x, y);
+
+                if (movement.Length > 0)
+                    walkingQueue = 0;
+                else
+                    walkingQueue = -1;
+            }
+        }
+
+        private object _lock = new object();
+        public object Clone() => MemberwiseClone();
+
+
+        public static int FORCED_MOVEMENT = 0, GRAPHIC = 1, ANIMATION = 2, FORCED_CHAT = 3, CHAT_TEXT = 4, INTERACTING_ENTITY = 5, 
+        APPEARANCE_CHANGED = 6, FACING = 7, DAMAGE = 8, DAMAGE_2 = 9;
+
+        public static int[] masks = { 0x400, 0x100, 0x8, 0x4, 0x80, 0x1, 0x10, 0x2, 0x20, 0x200 };
+    }
+
+    public class NPCEntity : Actor
+    {
+
+    }
+
+    //movable, "living" entity
+    public class Actor : WorldEntity
+    {
+        void ApplyDamage() { }
+
+        void MoveTo() { }
+
+        void SetAnimation() { }
+
+        void InteractingEntity(Actor target) { }
+
+        void Talk(string text) { }
+
+    }
+        
+    public class GroundItemEntity : WorldEntity 
+    { 
+    
+    }
+
+    public class ObjectEntity : WorldEntity 
+    {
+        bool replaceObject;
+    }
+
+    public class WorldEntity
     {
         public int id;
         public int x, y, z;
@@ -28,103 +142,6 @@ namespace ServerEmulator.Core.Game
                 return Coordinate.NONE;
 
             return new Coordinate() { x = difX, y = difY };
-        }
-
-        public class Actor : WorldEntity
-        {
-
-        }
-
-        public class PlayerEntity : WorldEntity
-        {
-            public EffectMaskPlayer effectUpdateMask = EffectMaskPlayer.NONE;
-            public bool justSpawned, running = true, teleported = false;
-
-            public Direction[] movement = new Direction[0], lastSteps = null;
-            public int walkingQueue = -1;
-
-            public byte gender = 0, headicon = 0;
-            public long username;
-
-            public int[] appearanceValues;
-            public int[] colorValues;
-            public int[] animations;
-
-            public byte[] effectBuffer { get; set; }
-
-            public byte CombatLevel { get { return 3; } }
-            public ushort Skill { get { return 0; } }
-            public bool EffectUpdateRequired { get { return effectUpdateMask != EffectMaskPlayer.NONE; } }
-            public bool HasEffectUpdate { get { return effectBuffer != null; } }
-
-            public enum EffectMaskPlayer : int
-            {
-                NONE = 0x0,
-                FORCED_MOVEMENT = 0x400, //init x, y, dest x, y, start, end, direction
-                GRAPHIC = 0x100, //graphic, info
-                ANIMATION = 0x8, //animation, delay
-                FORCED_CHAT = 0x4, //text
-                CHAT_TEXT = 0x80, //textinfo, privilege, offset, off
-                INTERACTING_ENTITIY = 0x1, //mob-id
-                APPEARANCE = 0x10,  //gender, headicon, bodyparts, colors, idle and walk animations, name, combat, skill
-                FACING = 0x2, //x, y
-                DAMAGE = 0x20, //damage, type, curHealth, maxHealth
-                DAMAGE2 = 0x200 //damage, type, curHealth, maxHealth
-            }
-
-            public Direction[] GetMovementSteps()
-            {
-                return lastSteps;
-            }
-
-            public PlayerEntity()
-            {
-                effectUpdateMask = EffectMaskPlayer.APPEARANCE;
-                justSpawned = true;
-
-                Update = () =>
-                {
-                    lastSteps = new Direction[2] { Direction.NONE, Direction.NONE };
-
-                    if (walkingQueue != -1)
-                    {
-                        lastSteps[0] = movement[walkingQueue++];
-                        Coordinate moved = Movement.Directions[(int)lastSteps[0]];
-                        if (running && walkingQueue < movement.Length)
-                        {
-                            lastSteps[1] = movement[walkingQueue++];
-                            moved += Movement.Directions[(int)lastSteps[1]];
-                        } 
-                        if (walkingQueue >= movement.Length)
-                            walkingQueue = -1;
-                        x += moved.x;
-                        y += moved.y;
-                    }
-
-                    effectBuffer = EntityUpdates.BuildPlayerEffectUpdate(this);
-                };
-
-
-            }
-
-        }
-
-        public class NPCEntity : WorldEntity
-        {
-            public EffectMaskNPC effectUpdateMask = EffectMaskNPC.NONE;
-
-            public enum EffectMaskNPC : int
-            {
-                NONE = 0x0,
-                ANIMATION = 0x10, //id, delay
-                DAMAGE = 0x8, //value, type
-                GRAPHIC = 0x80, //graphic, info
-                INTERACTING_ENTITY = 0x20, //mob-id
-                CHAT = 0x1, //text
-                DAMAGE2 = 0x40, //value, type, curHealth, maxhealth
-                APPEARANCE = 0x2,  //npcdefid (walking and idle animations, size)
-                FACING = 0x4 //x, y
-            }
         }
     }
 

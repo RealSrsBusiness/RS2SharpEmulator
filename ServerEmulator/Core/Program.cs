@@ -15,8 +15,163 @@ namespace ServerEmulator.Core
     internal class Program
     {
         public static Processor Processor { get; private set; }
-        static bool DEBUG = false;
+        public static bool DEBUG { get; private set; } = false;
 
+        static void Main(string[] args)
+        {
+            playground();
+            Console.Title = "Server Emulator Rev #" + Constants.SERVER_REV;
+
+#if DEBUG
+            DEBUG = true;
+#endif
+
+            if (args.Length > 0)
+                if (args[0].ToLower().Equals("debug"))
+                    DEBUG = true;
+
+
+            if (Debugger.IsAttached && !DEBUG)
+                return;
+            
+
+            if(!Directory.Exists(Constants.DATA_PATH))
+            {
+                Directory.CreateDirectory(Constants.DATA_PATH);
+                Program.Log("Content folder created.");
+            }
+
+
+            Processor = new Processor();
+            Processor.Start();
+
+            DataLoader.LoadContent();
+
+            Log("Server successfully initialized @ " + Thread.CurrentThread.ManagedThreadId);
+
+            while(Processor.Running)
+            {
+                string cmd = Console.ReadLine().ToLower();
+                switch(cmd)
+                {
+                    case "exit":
+                        Shutdown("Server shutdown by command.", false);
+                        break;
+
+                    case "help":
+                        Console.WriteLine("Commands: exit, help.");
+                        break;
+
+                    case "thread":
+                        Console.WriteLine("Thread id: " + Thread.CurrentThread.ManagedThreadId);
+                        break;
+
+                    default: Log("Unrecognized command, type 'help' for a list of commands.");
+                        break;
+                }
+            }
+        }
+
+        public static void Log(string text, params object[] format)
+        {
+            DateTime dt = DateTime.Now;
+            Console.WriteLine("[{0}:{1}:{2}] {3}", dt.Hour, dt.Minute, dt.Second, string.Format(text, format));
+        }
+
+        public static void Warning(string text, params object[] format)
+        {
+            ConsoleColor cc = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Log(text, format);
+            Console.ForegroundColor = cc;
+        }
+
+        public static void Debug(string text, params object[] format)
+        {
+            if(DEBUG)
+                Log($"[DEBUG] {text}", format);
+        }
+
+        public static void Shutdown(string exitMsg, bool exit = true, params object[] format)
+        {
+            Cleanup();
+            Log(exitMsg, format);
+            if(!exit)
+                Console.ReadKey();
+            Environment.Exit(0);
+        }
+
+        public static event Action Cleanup = delegate { };
+
+        /* RS2SharpEmulator
+         * Server command suggestions:
+         * status = shows the status including listening port and bound socket; connected clients
+         * online = lists online players
+         * count = number of players online
+         * save = saves all players
+         * restart = saves all players, disconnects them and restarts the server
+         * close = shuts the server down
+         * update <seconds> <restart/restartPC/restart+update>= update the server
+         * kick <ip/p> [value] = kicks a player or ip address
+         * ban <ip/p> [value] = bans a player or ip address
+         * pause = pauses the listener; all open connections are kept open, however no new connections are established
+         * purge <yes/no(listener)> = disconnects every player; the server keeps running
+         * start = starts the listener
+         * msg <message> = global message
+         * 
+         * Player commands:
+         * skill <player> <skill> <xp>
+         * give <player> <item> <count>
+         * kill <player>
+         * teleport <player> <coords>
+         * teletoplayer <player> <player>
+         * rollback <player> <id>
+         * 
+         * */
+
+        //higher rev implementations: a* pathfinding, xtea map files, "onExamine" packet 
+
+
+
+#region  -------------------------- Test/Playground-Region ----------------------------------
+        
+        interface Effe {
+
+        }
+
+        class Damage : Effe {
+
+        }
+
+        class Appear : Effe {
+
+        }
+
+        static void playground() {
+            if(true) return;
+
+            List<bool> bits = new List<bool>();
+            bits.EncodeValue(8, 156);
+            bits.OverwriteValueAt(0, 8, 0);
+            bits.OverwriteValueAt(4, 4, 15);
+
+            ;
+    
+
+/*
+            Object[] objs = new Object[] {
+                1, 2, 3, 5
+            };
+
+            Object[] src = {objs[0], objs[1], objs[2]};
+            Object[] trg = {objs[0], objs[3]};
+
+            var changes = src.Difference<Object>(trg);
+            ;
+*/
+        }
+        
+       
         static void PerformanceTest()
         {
             byte[] data = new byte[100];
@@ -255,7 +410,7 @@ namespace ServerEmulator.Core
             lolLevel++;
             if (lolLevel >= 9000)
             {
-                Program.Log("lol");
+                Program.Log("blah");
                 lolLevel = 0;
             }
             //t.Stop();
@@ -295,7 +450,7 @@ namespace ServerEmulator.Core
                 {
                     for (int i = 0; i < 1000; i++)
                     {
-                        Console.WriteLine("lul" + i);
+                        Console.WriteLine("blub" + i);
                         Thread.Sleep(10);
                     }
                 }
@@ -308,7 +463,7 @@ namespace ServerEmulator.Core
                 {
                     for (int i = 0; i < 1000; i++)
                     {
-                        Console.WriteLine("lolol" + i);
+                        Console.WriteLine("blah" + i);
                         Thread.Sleep(10);
                     }
                 }
@@ -336,7 +491,7 @@ namespace ServerEmulator.Core
                 
                 for (int i = 0; i < 1000; i++)
                 {
-                        Console.WriteLine("lul" + i);
+                        Console.WriteLine("blah1" + i);
                         Thread.Sleep(10);
                 }
 
@@ -351,7 +506,7 @@ namespace ServerEmulator.Core
 
                 for (int i = 0; i < 1000; i++)
                 {
-                    Console.WriteLine("lolol" + i);
+                    Console.WriteLine("blah2" + i);
                     Thread.Sleep(10);
                 }
             }
@@ -465,116 +620,9 @@ namespace ServerEmulator.Core
 
         }
 
-        static void Main(string[] args)
-        {
 
-            Console.Title = "Server Emulator Rev #" + Constants.SERVER_REV;
+#endregion
 
-            for (int i = 0; i < args.Length; i++)
-            {
-                string p = args[i].ToLower();
-                if(p.Equals("debug"))
-                    DEBUG = true;
-            }
-
-#if DEBUG
-                DEBUG = true;
-#endif
-
-            if (Debugger.IsAttached && !DEBUG)
-                return;
-            
-
-            if(!Directory.Exists(Constants.DATA_PATH))
-            {
-                Directory.CreateDirectory(Constants.DATA_PATH);
-                Program.Log("Content folder created.");
-            }
-
-
-            Processor = new Processor();
-            Processor.Start();
-
-            Log("Server successfully initialized");
-
-            while(Processor.Running)
-            {
-                string cmd = Console.ReadLine().ToLower();
-                switch(cmd)
-                {
-                    case "exit":
-                        Shutdown("Server shutdown by command.", false);
-                        break;
-
-                    case "help":
-                        Console.WriteLine("Commands: exit, help.");
-                        break;
-
-                    default: Log("Unrecognized command, type 'help' for a list of commands.");
-                        break;
-                }
-            }
-        }
-
-
-        public static void Log(string text, params object[] format)
-        {
-            DateTime dt = DateTime.Now;
-            Console.WriteLine("[{0}:{1}:{2}] {3}", dt.Hour, dt.Minute, dt.Second, string.Format(text, format));
-        }
-
-        public static void Warning(string text, params object[] format)
-        {
-            ConsoleColor cc = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Red;
-            Log(text, format);
-            Console.ForegroundColor = cc;
-        }
-
-        public static void Debug(string text, params object[] format)
-        {
-            if(DEBUG)
-                Log($"[DEBUG] {text}", format);
-        }
-
-        public static void Shutdown(string exitMsg, bool exit = true, params object[] format)
-        {
-            Cleanup();
-            Log(exitMsg, format);
-            if(!exit)
-                Console.ReadKey();
-            Environment.Exit(0);
-        }
-
-        public static event Action Cleanup = delegate { };
-
-        /* RSSharpEmulator
-         * Server commands:
-         * status = shows the status including listening port and bound socket; connected clients
-         * online = lists online players
-         * count = number of players online
-         * save = saves all players
-         * restart = saves all players, disconnects them and restarts the server
-         * close = shuts the server down
-         * update <seconds> <restart/restartPC/restart+update>= update the server
-         * kick <ip/p> [value] = kicks a player or ip address
-         * ban <ip/p> [value] = bans a player or ip address
-         * pause = pauses the listener; all open connections are kept open, however no new connections are established
-         * purge <yes/no(listener)> = disconnects every player; the server keeps running
-         * start = starts the listener
-         * msg <message> = global message
-         * 
-         * Player commands:
-         * skill <player> <skill> <xp>
-         * give <player> <item> <count>
-         * kill <player>
-         * teleport <player> <coords>
-         * teletoplayer <player> <player>
-         * rollback <player> <id>
-         * 
-         * */
-
-        //higher rev implementations: a* pathfinding, xtea map files, "onExamine" packet 
 
     }
 }

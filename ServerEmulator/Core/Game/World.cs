@@ -8,45 +8,60 @@ using static ServerEmulator.Core.Game.WorldEntity;
 
 namespace ServerEmulator.Core.Game
 {
+    delegate bool EntityFilter<T>(T we) where T : WorldEntity;
+
     /// <summary>
     /// Represents the entire gameworld and operations that can be done in it
-    /// with all players, objects, npcs and items in it
+    /// with all players, objects, npcs and grounditems
     /// extra: projectiles?, gfx? sound effects?
     /// </summary>
     static class World
     {
-        public class Region
-        {
-            Tile[] tiles = new Tile[8 * 8];
-        }
-
-        public class Tile
-        {
-
-        }
-
-        static Region[] regions = new Region[375 * 375 * 4];
-
+        public static List<WorldEntity> globalEntities = new List<WorldEntity>();
 
         internal static void Init()
         {
+            if (Constants.MAP_LOADING_METHOD == 0 && !Program.DEBUG)
+                Program.Warning("World Map is not loaded. The server cannot verify clipping and objects. Only use this setting for testing.");
+
             for (int i = 0; i < regions.Length; i++)
             {
                 regions[i] = new Region();
             }
+
+            //add some test npcs, grounditem and replace an object
+            NPCEntity man = new NPCEntity() { id = 1, x = 3198, y = 3204, z = 0 };
+            NPCEntity woman = new NPCEntity() { id = 4, x = 3194, y = 3202, z = 0 };
+            NPCEntity guard = new NPCEntity() { id = 10, x = 3199, y = 3201, z = 0 };
+
+            GroundItemEntity runeScim = new GroundItemEntity() { id = 1333, x = 3192, y = 3202, z = 0 };
+
+            ObjectEntity replaceStandardWithCrate = new ObjectEntity() { id = 1, x = 3198, y = 3205, z = 0 };
+
+            /* RegisterEntity(man);
+             RegisterEntity(woman);
+             RegisterEntity(guard);
+
+             RegisterEntity(runeScim);
+             
+             RegisterEntity(replaceStandardWithCrate);
+             */
         }
 
-        //used for better npc walking and higher revision player walking
-        //finding the target is guaranteed
-        public static void FindPathAStar()
+        public static T[] FindEntities<T>(EntityFilter<T> filter, int limit = 1, Region region = null) where T : WorldEntity
         {
+            List<T> result = new List<T>();
+            for (int i = 0; i < globalEntities.Count; i++)
+            {
+                var entity = globalEntities[i];
+                
+                if (entity is T && filter((T)entity))
+                    result.Add((T)entity);
 
-        }
-
-        //used for following, finding the target is not guaranteed  
-        public static void FindPathSimple()
-        {
-
+                if (limit != -1 && result.Count >= limit)
+                    break;
+            }
+            return result.ToArray();
         }
 
         public static void ProcessWorld()
@@ -66,22 +81,31 @@ namespace ServerEmulator.Core.Game
             globalEntities.Remove(entity);
         }
 
-        public static T[] FindEntities<T>(EntityFilter<T> filter, Region region = null, int limit = 1) where T : WorldEntity
+        //used for better npc walking and higher revision player walking
+        //finding the target is guaranteed
+        public static void FindPathAStar()
         {
-            List<T> result = new List<T>();
-            for (int i = 0; i < globalEntities.Count; i++)
-            {
-                var entity = globalEntities[i];
-                if (entity is T && filter((T)entity))
-                    result.Add((T)entity);
-                if (result.Count >= limit)
-                    break;
-            }
-            return result.ToArray();
+
         }
 
-        public static List<WorldEntity> globalEntities = new List<WorldEntity>();
+        //used for following, getting to the target is not guaranteed  
+        public static void FindDirectPath()
+        {
+
+        }
+
+
+        static Region[] regions = new Region[375 * 375 * 4];
+        
     }
 
-    delegate bool EntityFilter<T>(T we) where T : WorldEntity;
+    public class Region
+    {
+        Tile[] tiles = new Tile[8 * 8];
+    }
+
+    public class Tile
+    {
+
+    }
 }

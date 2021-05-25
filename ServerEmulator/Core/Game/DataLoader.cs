@@ -23,6 +23,7 @@ namespace ServerEmulator.Core.Game
         internal static GameObject[] Objects;
 
         internal static Dictionary<int, Action> ActionButtons;
+        internal static Dictionary<string, Interaction> Commands = new Dictionary<string, Interaction>();
         internal static Definition PlayerActions;
 
         internal static object[] CreateCustomStates()
@@ -33,10 +34,9 @@ namespace ServerEmulator.Core.Game
         internal static void LoadContent()
         {
             ObjectMap();
-            MapXteas();
+            //MapXteas(); //untested
             Lists();
-            Modules();
-            Scripts();
+            LoadModules(Assembly.GetExecutingAssembly());
 
             LoadingComplete = true;
 
@@ -45,56 +45,34 @@ namespace ServerEmulator.Core.Game
 
         private static void Lists()
         {
-
-
-            Program.Warning("Content lists could not be loaded.");
+            if(Program.DEBUG)
+                Program.Warning("Content lists could not be loaded.");
         }
 
-        private static void Scripts()
+        private static void LoadModules(Assembly netAsm)
         {
-            //var csharp = new CSharpCodeProvider();
+            var types = netAsm.GetTypes();
+            int loaded = 0;
 
-        }
-
-        private static void Modules()
-        {
-            string[] files = Directory.GetFiles(PLUGIN_PATH);
-            int modulesLoaded = 0;
-            for (int i = 0; i < files.Length; i++)
+            for (int i = 0; i < types.Length; i++)
             {
-                var file = files[i];
-                try
-                {
-                    Assembly asm = Assembly.LoadFrom(file);
-                    var types = asm.GetTypes();
+                var type = types[i];
 
-                    for (int j = 0; j < types.Length; j++)
-                    {
-                        Type t = types[j];
-
-                        if (typeof(Content) == t)
-                        {
-                            Content module = (Content)Activator.CreateInstance(t);
-                            module.Load();
-                        }
-                    }
-                    modulesLoaded++;
+                if(type.IsSubclassOf(typeof(Content))) {
+                    var content = (Content)Activator.CreateInstance(type);
+                    content.Load();
+                    loaded++;
                 }
-                catch
-                {
-
-                }
-      
             }
 
+            Console.WriteLine($"Loaded {loaded} modules.");
 
-            var me = Assembly.GetExecutingAssembly();
-            
         }
 
         private static void ObjectMap()
         {
-            Program.Warning("Map Verification deactivated.");
+            if(Constants.MAP_LOADING_METHOD == 0);
+                Program.Warning("Map Verification deactivated.");
         }
 
         private static void MapXteas()

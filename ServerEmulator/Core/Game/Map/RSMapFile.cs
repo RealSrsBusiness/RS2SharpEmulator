@@ -9,14 +9,14 @@ namespace ServerEmulator.Core.Game.Map
 {
     class RSMapFile
     {
-        struct Obj
+        struct GameObjectDef
         {
             public int id, x, y, z;
             public int type; //collision type? object type? both?
             public int orientation; //needed for collision
         }
 
-        List<Obj> objects = new List<Obj>();
+        List<GameObjectDef> objects = new List<GameObjectDef>();
         public sbyte[,,] renderRuleFlags;
 
         public void DecodeObjectData(byte[] data, int localX, int localY)

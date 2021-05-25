@@ -136,36 +136,38 @@ namespace ServerEmulator.Core.IO
 
         public string ReadString()
         {
-            return bytesToString(ReadStringBytes());
+            return BytesToString(ReadStringBytes());
         }
 
         public sbyte[] ReadStringBytes()
         {
             List<sbyte> str = new List<sbyte>();
             sbyte b;
-            do
+
+            while((b = ReadByte()) != '\n') //read until linebreak.
             {
-                b = ReadByte();
                 str.Add(b);
-            } while (b != 10);
+            }
 
             return str.ToArray();
         }
 
-        public static sbyte[] stringToBytes(string input)
+        public static sbyte[] StringToBytes(string input)
         {
             sbyte[] output = new sbyte[input.Length];
             for (int i = 0; i < input.Length; i++)
                 output[i] = (sbyte)input[i];
+                
             return output;
         }
 
-        public static string bytesToString(sbyte[] input)
+        public static string BytesToString(sbyte[] input)
         {
             sbyte[] a = input;
             char[] result = new char[a.Length];
             for (int i = 0; i < a.Length; i++)
                 result[i] = (char)a[i];
+
             return new string(result);
         }
 

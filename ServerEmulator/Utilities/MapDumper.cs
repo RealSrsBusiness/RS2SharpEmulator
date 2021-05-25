@@ -11,7 +11,7 @@ namespace ServerEmulator.Utilities
     /// </summary>
     class MapDumper
     {
-        public static void Main()
+        public static void _Main()
         {
              
         }

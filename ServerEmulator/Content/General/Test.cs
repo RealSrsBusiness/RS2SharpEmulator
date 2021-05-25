@@ -21,9 +21,37 @@ namespace ServerEmulator.Content.Skills
         }
 #endif
 
+        delegate void PerformCmd(string[] args);
+        Dictionary<string, PerformCmd> cmds = new Dictionary<string, PerformCmd>();
+
 
         public override void Load()
         {
+            if(true) {
+                Console.WriteLine("laoded test.");
+                return;
+            }
+
+            Dictionary<(int, int), string> dict = new Dictionary<(int, int), string>();
+
+
+
+
+            cmds.Add("item", (string[] args) =>
+            {
+
+            });
+
+            string cmd = "";
+
+            var data = cmd.Split(' ');
+            string mycmd = data[0];
+            var args_ = data.Skip(1);
+
+            cmds[mycmd]((string[])args_);
+
+
+
             for (int i = 0; i < 1000; i++)
             {
 
@@ -42,7 +70,7 @@ namespace ServerEmulator.Content.Skills
 
                 var task = Task.Factory.StartNew(() =>
                 {
-                    return 88;
+                    return 33;
                 }, TaskCreationOptions.LongRunning);
 
                 Task.WaitAll(task);
@@ -103,6 +131,7 @@ namespace ServerEmulator.Content.Skills
     }
 
     static class Ex { public static Cxt State(this Client c) => c.State<Cxt>(0); }
+
 
     static class Ex2 {
         static Random ran = new Random();

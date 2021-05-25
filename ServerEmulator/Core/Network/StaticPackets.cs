@@ -86,6 +86,17 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteShort(weight);
         }
 
+        public void SpecialAttackAmt(int barId, int amount)
+        {
+            c.WriteOpCode(INTF_HIDDEN);
+            c.Writer.WriteByte(1);
+            c.Writer.WriteShort(barId);
+
+            c.WriteOpCode(BTN_SET);
+            c.Writer.WriteShort(300);
+            c.Writer.WriteInt(amount);
+        }
+
         public void SetPlayerContextMenu(byte indexId, bool isPrimary, string text)
         {
             var p = c.WriteOpCodeVar(PLAYER_RIGHTCLICK);
@@ -212,8 +223,8 @@ namespace ServerEmulator.Core.Network
             bool isMember, int lastIp, ushort daysLastLogin)
         {
             c.WriteOpCode(INTF_WELCOME);
-            c.Writer.WriteByte(daysSinceRec);
-            c.Writer.WriteShort(unreadMsg);
+            c.Writer.WriteNegatedByte(daysSinceRec);
+            c.Writer.WriteShortA(unreadMsg);
             c.Writer.WriteByte(isMember ? 1 : 0);
             c.Writer.WriteInt(lastIp);
             c.Writer.WriteShort(daysLastLogin);
@@ -263,10 +274,15 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteByte(world < 0 ? 0 : (world + 9));
         }
 
-        public void PlayerUpdate(byte[] update)
+        public void PlayerUpdate(List<bool> bits, byte[] effectUpdates)
         {
             var p = c.WriteOpCodeVar(PLAYER_UPDATE, VarSizePacket.Type.SHORT);
-            c.Writer.BaseStream.Write(update, 0, update.Length);
+            var bitArray = bits.ToByteArray();
+
+            c.Writer.BaseStream.Write(bitArray, 0, bitArray.Length);
+            c.Writer.BaseStream.Write(effectUpdates, 0, effectUpdates.Length);
+            c.Writer.WriteByte(42);
+
             c.FinishVarPacket(p);
         }
 

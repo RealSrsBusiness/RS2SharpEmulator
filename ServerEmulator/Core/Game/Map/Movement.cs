@@ -7,19 +7,6 @@ namespace ServerEmulator.Core.Game
 {
     public static class Movement
     {
-        public enum Direction : int
-        {
-            NONE = -1,
-            NORTH_WEST = 0,
-            NORTH = 1,
-            NORTH_EAST = 2,
-            EAST = 4,
-            SOUTH_EAST = 7,
-            SOUTH = 6,
-            SOUTH_WEST = 5,
-            WEST = 3,
-        }
-
         public readonly static Coordinate[] Directions = new Coordinate[] {
             new Coordinate() { x = -1, y = 1 },
             new Coordinate() { x = 0, y = 1 },
@@ -97,6 +84,19 @@ namespace ServerEmulator.Core.Game
 
             return path.ToArray();
         }
+    }
+
+    public enum Direction : int
+    {
+        NONE = -1,
+        NORTH_WEST = 0,
+        NORTH = 1,
+        NORTH_EAST = 2,
+        EAST = 4,
+        SOUTH_EAST = 7,
+        SOUTH = 6,
+        SOUTH_WEST = 5,
+        WEST = 3,
     }
 
     public struct Coordinate3
