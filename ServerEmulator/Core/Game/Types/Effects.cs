@@ -5,23 +5,59 @@ using System.IO;
 
 namespace ServerEmulator.Core.Game
 {
-    class AccessWatcher {
-        object _value;
-        internal AccessWatcher(object obj, bool initChange = false) {
-            _value = obj;
+    class EffectStates //WatchedEffectStates
+    {
+        AccessWatcher[] effects = new AccessWatcher[] { 
+            null, //forced_movement
+            null, //graphic
+            new AccessWatcher(new PlayerAnimation()), 
+            null, //forced chat
+            new AccessWatcher(new PlayerChat()), 
+            null, //interacting_entity
+            new AccessWatcher(new PlayerAppearance()), 
+            null, //facing
+            new AccessWatcher(new PlayerDamage()), 
+            null, //damage2
+        };
+
+        public PlayerAnimation Animation => effects[ANIMATION].Value<PlayerAnimation>();
+        public PlayerChat Chat => effects[CHAT_TEXT].Value<PlayerChat>();
+        public PlayerAppearance Appearance => effects[APPEARANCE_CHANGED].Value<PlayerAppearance>();
+        public PlayerDamage Damage => effects[DAMAGE].Value<PlayerDamage>();
+
+        
+
+
+        const int FORCED_MOVEMENT = 0, GRAPHIC = 1, ANIMATION = 2, FORCED_CHAT = 3, CHAT_TEXT = 4, INTERACTING_ENTITY = 5, 
+        APPEARANCE_CHANGED = 6, FACING = 7, DAMAGE = 8, DAMAGE_2 = 9;
+
+
+        static int[] masks = { 0x400, 0x100, 0x8, 0x4, 0x80, 0x1, 0x10, 0x2, 0x20, 0x200 };
+    }
+
+    class AccessWatcher //todo: probably can be simplified and merged with EffectStates
+    {
+        internal AccessWatcher(object value, bool initChange = false) 
+        {
+            _value = value;
             Changed = initChange;
         }
 
         public void Reset() => Changed = false;
-        internal T Value<T>() {
+
+        internal T Value<T>() 
+        {
             Changed = true;
             return (T)_value;
         }
+
+        object _value;
         public bool Changed { get; private set; }
     }
 
-
-    interface Effect {
+    interface Effect 
+    {
+        int cycles { get; } //how long should the effect appear for; -1 = unlimited until changed
         void Write(RSStreamWriter sw);
     }
 
@@ -34,6 +70,8 @@ namespace ServerEmulator.Core.Game
         public int[] appearanceValues, colorValues, idleAnimations;
 
         private byte[] buffer;
+
+        public int cycles => -1;
 
         public void Write(RSStreamWriter sw_)
         {
@@ -89,7 +127,9 @@ namespace ServerEmulator.Core.Game
 
     class PlayerAnimation : Effect 
     {
-        public int animationId = 0, delay = 0; 
+        public int cycles => -1;
+        public int animationId = 0, delay = 0;
+
         public void Write(RSStreamWriter sw)
         {
             sw.WriteLEShort(animationId);
@@ -99,6 +139,7 @@ namespace ServerEmulator.Core.Game
 
     class PlayerChat : Effect 
     {
+        public int cycles => 3;
         public int textInfo = 0, privilage = 0, offset = 0;
 
         public void Write(RSStreamWriter sw)
@@ -112,6 +153,7 @@ namespace ServerEmulator.Core.Game
 
     class PlayerDamage : Effect
     {
+        public int cycles => 1;
         public int damage = 0, type = 0, health = 0, maxHealth = 0;
 
         public void Write(RSStreamWriter sw)

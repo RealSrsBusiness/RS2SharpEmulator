@@ -18,7 +18,7 @@ namespace ServerEmulator.Core
         List<Client> establishedClients = new List<Client>(MAX_PLAYER);
         Socket listener;
 
-        private int delayedTicks;
+        private int delayedCycles;
         private object _lock = new object();
         public bool Running { get; set; }
 
@@ -44,9 +44,12 @@ namespace ServerEmulator.Core
                 //update all entities (actions, movement of players, npcs etc, effect updates)
                 World.ProcessWorld();
 
-                //update what all the clients see and send out packets, todo: this can be parallelized, since no writing is done at this point
+                //update what all the clients "see" and send out packets; todo: this can be parallelized, since no writing is done at this point
                 foreach(var client in establishedClients)
                     client.RenderScreen();
+
+                //cleanup, like expiring effects so an effect with an old value like a hitsplit doesn't carry over to the next cycle
+                World.PerformPostProcess();
 
                 sw.Stop();
                 
@@ -57,13 +60,14 @@ namespace ServerEmulator.Core
                 }
                 else
                 {
-                    delayedTicks++;
-                    Program.Warning("Server can't keep up! Delayed ticks so far: {0}", delayedTicks);
+                    delayedCycles++;
+                    Program.Warning("Server can't keep up! Cycle took {0} ms, Delayed cycles: {1}", (int)sw.ElapsedMilliseconds, delayedCycles);
                 }
                 sw.Reset();
             }
         }
 
+        //todo: messy, find a better way to handle multithreading, AutoResetEvent?
         public void RegisterClient(Client client)
         {
             lock (_lock)
