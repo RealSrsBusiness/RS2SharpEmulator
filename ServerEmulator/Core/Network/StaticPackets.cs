@@ -274,15 +274,14 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteByte(world < 0 ? 0 : (world + 9));
         }
 
-        public void PlayerUpdate(List<bool> bits, byte[] effectUpdates)
+        public void PlayerUpdate(List<bool> movementPlayerList, byte[] effectUpdates)
         {
             var p = c.WriteOpCodeVar(PLAYER_UPDATE, VarSizePacket.Type.SHORT);
-            var bitArray = bits.ToByteArray();
+            var bitArray = movementPlayerList.ToByteArray();
 
             c.Writer.BaseStream.Write(bitArray, 0, bitArray.Length);
             c.Writer.BaseStream.Write(effectUpdates, 0, effectUpdates.Length);
-            c.Writer.WriteByte(42);
-
+            
             c.FinishVarPacket(p);
         }
 

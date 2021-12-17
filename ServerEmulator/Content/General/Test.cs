@@ -28,13 +28,11 @@ namespace ServerEmulator.Content.Skills
         public override void Load()
         {
             if(true) {
-                Console.WriteLine("laoded test.");
+                Console.WriteLine("loaded test.");
                 return;
             }
 
             Dictionary<(int, int), string> dict = new Dictionary<(int, int), string>();
-
-
 
 
             cmds.Add("item", (string[] args) =>
@@ -80,7 +78,6 @@ namespace ServerEmulator.Content.Skills
 
                 int? hhh = 66;
 
-
                 int[] iiii = new int[5555];
                 object o = iiii;
 
@@ -90,7 +87,6 @@ namespace ServerEmulator.Content.Skills
                 
 
                 int i5 = 0;
-
                 Thread t = new Thread(() =>
                 {
                     i5 = 7888;

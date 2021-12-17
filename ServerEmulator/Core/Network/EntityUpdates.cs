@@ -116,7 +116,7 @@ namespace ServerEmulator.Core.NetworkProtocol
                 bits.EncodeValue(11, index);
                 bits.EncodeValue(1, effect ? 1 : 0);
                 bits.EncodeValue(1, teleport ? 1 : 0);
-                bits.EncodeValue(5, y);
+                bits.EncodeValue(5, y); //relative to local player?
                 bits.EncodeValue(5, x);
             }
 

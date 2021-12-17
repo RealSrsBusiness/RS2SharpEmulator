@@ -20,11 +20,14 @@ namespace ServerEmulator.Core
         static void Main(string[] args)
         {
             playground();
-            Console.Title = "Server Emulator Rev #" + Constants.SERVER_REV;
 
+            var windowTitle = "Server Emulator Rev #" + Constants.SERVER_REV;
 #if DEBUG
             DEBUG = true;
-#endif
+            windowTitle = "[DEBUG] " + windowTitle;
+#endif     
+            Console.Title = windowTitle;
+
 
             if (args.Length > 0)
                 if (args[0].ToLower().Equals("debug"))
@@ -33,7 +36,7 @@ namespace ServerEmulator.Core
 
             if (Debugger.IsAttached && !DEBUG)
                 return;
-            
+                
 
             if(!Directory.Exists(Constants.DATA_PATH))
             {

@@ -22,7 +22,7 @@ namespace ServerEmulator.Core.Game
         internal static void Init()
         {
             if (Constants.MAP_LOADING_METHOD == 0 && !Program.DEBUG)
-                Program.Warning("World Map is not loaded. The server cannot verify clipping and objects. Only use this setting for testing.");
+                Program.Warning("World Map is not loaded. The server wont verify clipping and objects. Only use this setting for testing.");
 
             for (int i = 0; i < regions.Length; i++)
             {
@@ -58,7 +58,7 @@ namespace ServerEmulator.Core.Game
                 if (entity is T && filter((T)entity))
                     result.Add((T)entity);
 
-                if (limit != -1 && result.Count >= limit)
+                if (limit != -1 && result.Count >= limit) //break when limit reached; -1 = unlimited
                     break;
             }
             return result.ToArray();
@@ -68,6 +68,12 @@ namespace ServerEmulator.Core.Game
         {
             for (int i = 0; i < globalEntities.Count; i++)
                 globalEntities[i].Update();
+        }
+
+        public static void PerformPostProcess()
+        {
+            for (int i = 0; i < globalEntities.Count; i++)
+                globalEntities[i].PostProcess();
         }
 
         //if region is set, this entity will only be updated if it's seen by a client in that region
@@ -81,14 +87,14 @@ namespace ServerEmulator.Core.Game
             globalEntities.Remove(entity);
         }
 
-        //used for better npc walking and higher revision player walking
-        //finding the target is guaranteed
+        
+        //creates a path around obstacles to a target; used for higher-revision player walking and more complex NPC behaviour
         public static void FindPathAStar()
         {
 
         }
 
-        //used for following, getting to the target is not guaranteed  
+        //get a direct line to a target, ignore obstacles; used for following
         public static void FindDirectPath()
         {
 

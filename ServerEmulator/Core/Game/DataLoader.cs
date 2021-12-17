@@ -71,7 +71,7 @@ namespace ServerEmulator.Core.Game
 
         private static void ObjectMap()
         {
-            if(Constants.MAP_LOADING_METHOD == 0);
+            if(Constants.MAP_LOADING_METHOD == 0)
                 Program.Warning("Map Verification deactivated.");
         }
 
@@ -93,7 +93,7 @@ namespace ServerEmulator.Core.Game
                 fs.Close();
                 fs.Dispose();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 throw new Exception("Mapdata");
             }

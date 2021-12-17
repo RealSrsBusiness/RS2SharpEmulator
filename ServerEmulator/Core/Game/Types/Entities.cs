@@ -8,6 +8,8 @@ namespace ServerEmulator.Core.Game
     public class PlayerEntity : Actor, ICloneable
     {
         public bool teleported = true, running = true;
+
+        public bool justLoggedIn { get => teleported; }
         public Direction[] LastSteps { get; private set; } = new Direction[2] { Direction.NONE, Direction.NONE };
 
         Direction[] movement;
@@ -34,7 +36,7 @@ namespace ServerEmulator.Core.Game
                         LastSteps[0] = movement[walkingQueue++];
                         Coordinate moved = Movement.Directions[(int)LastSteps[0]];
 
-                        if (running && walkingQueue < movement.Length)
+                        if (running && walkingQueue < movement.Length) //can we run?
                         {
                             LastSteps[1] = movement[walkingQueue++];
                             moved += Movement.Directions[(int)LastSteps[1]];
@@ -65,6 +67,10 @@ namespace ServerEmulator.Core.Game
             }
         }
 
+        void DoDamage() {
+            //effects.Damage.damage = 100;
+        }
+
         public void SetMovement(Coordinate[] waypointCoords) //todo: sometimes causes a race condition
         {
             lock(_lock)
@@ -93,7 +99,7 @@ namespace ServerEmulator.Core.Game
 
     }
 
-    //movable, "living" entity
+    //moving, "living" entity
     public class Actor : WorldEntity
     {
         void ApplyDamage() { }
@@ -123,7 +129,7 @@ namespace ServerEmulator.Core.Game
         public int id;
         public int x, y, z;
 
-        public Action Update = delegate { };
+        public Action Update = delegate { }, PostProcess = delegate { }; //todo: replace with event?
 
         public ushort RegionX { get { return (ushort)(x >> 3); } }
         public ushort RegionY { get { return (ushort)(y >> 3); } }

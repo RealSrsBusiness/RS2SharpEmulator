@@ -21,7 +21,7 @@ namespace ServerEmulator.Core.Game
 
         DateTime loginTime;
         int activeInterface = -1;
-        bool focused = true;
+        bool isFocused = true;
 
         object[] customStates;
 
@@ -50,7 +50,7 @@ namespace ServerEmulator.Core.Game
                 World.RegisterEntity(Player);
                 loginTime = DateTime.Now;
 
-                Init();
+                SendInitialState();
             }
             else 
             {
@@ -69,48 +69,52 @@ namespace ServerEmulator.Core.Game
         {
             //var blah = new { blub = 100, test = "string" };
 
-            var newNearEntities = World.FindEntities<PlayerEntity>((PlayerEntity we) => {
-                return we.VerifyDistance(Player.x, Player.y) != Coordinate.NONE && we.id != Player.id;
+            var currentNearEntities = World.FindEntities<PlayerEntity>
+            ((PlayerEntity we) => {
+                return we.VerifyDistance(Player.x, Player.y) != Coordinate.NONE && we.id != Player.id; //filter for all entities except own player
             }, -1);
 
-            var changes = localEntityList.Difference<PlayerEntity>(newNearEntities);
+            var changes = localEntityList.Difference<PlayerEntity>(currentNearEntities);
 
             //todo: do something with the changes.
          
-            localEntityList = newNearEntities; //swap old entity list with new one
+            localEntityList = currentNearEntities; //swap old entity list with new one
 
-            CheckRegionChange();
+            CheckRegionChange(); //load map if needed
             
 
             /* Player Updating Process:
-             * 0: update the movement of the own player and/or update effects if needed
-             * 1: update movement of other players that are in the player list, determine if effect updates are needed or players need to be removed
-             * 2: add new players to the player list, determine if an effect update is needed, load the appearance (not effects!) if it's still buffered
-             * 3: we now know what players need effect updates, parse and apply all effects to own player and other players
+             * 0: update movement of own player and (if needed) set a flag to update effects 
+             * 1: update movement of other players that are already in the player list, determine if effect updates are needed or if players need to be removed
+             * 2: add new players to the player list, determine if an effect update is needed, load the appearance (not effects) if it's still buffered
+             * 3: based on previously set flags we know which players need effect updates, parse and apply all effects to own player and other players
              */
             List<bool> bits = new List<bool>();
             var effectUpdates = new RSStreamWriter(new MemoryStream());
             var appearEffect = Player.effects[APPEARANCE_CHANGED];
 
 
-            if(!Player.teleported) 
+            if(Player.justLoggedIn) //or teleported
             {
-                var steps = Player.LastSteps;
-                EntityUpdates.LocalPlayerMovement(ref bits, appearEffect.Changed, (int)steps[0], (int)steps[1]);
-            }
-            else 
-            { //either teleported or logged in, when logged in changed
                 EntityUpdates.LocalPlayerTeleported(ref bits, appearEffect.Changed, Player.LocalX, Player.LocalY, Player.z);
                 Player.teleported = false;
             }
+            else 
+            { 
+                var steps = Player.LastSteps;
+                EntityUpdates.LocalPlayerMovement(ref bits, appearEffect.Changed, (int)steps[0], (int)steps[1]);
+            }
 
+            //todo: effects
             Player.WriteEffects(effectUpdates);
 
 
-            var otherMovement = new EntityUpdates.OtherEntitiesMovement(bits);
+            var otherMovementList = new EntityUpdates.OtherEntitiesMovement(bits);
             var playerList = new EntityUpdates.NewPlayerList(bits);
 
-            otherMovement.Finish();
+            //todo: entities, player list
+
+            otherMovementList.Finish();
             playerList.Finish();
 
 
@@ -143,7 +147,7 @@ namespace ServerEmulator.Core.Game
 
         static int[] SIDE_BARS = { 2423, 3917, 638, 3213, 1644, 5608, 1151, -1, 5065, 5715, 2449, 904, 147, 962 };
 
-        private void Init()
+        private void SendInitialState()
         {
             Packets.SetConfig(172, 0);
             Packets.RunEnergy(100);
@@ -216,10 +220,7 @@ namespace ServerEmulator.Core.Game
             return -1;
         }
 
-        public static void FreePlayerSlot(int id)
-        {
-            playerSlots[id] = false;
-        }
+        public static void FreePlayerSlot(int id) => playerSlots[id] = false;
 
         static bool[] playerSlots = new bool[Constants.MAX_PLAYER];
 
