@@ -12,29 +12,32 @@ namespace ServerEmulator.Core
     /// <summary>
     /// Controls the server and loads and saves settings
     /// </summary>
+    
     internal class Program
     {
         public static Processor Processor { get; private set; }
-        public static bool DEBUG { get; private set; } = false;
+        public static bool DebugRunTime { get; private set; } = false;
+
+        public static string windowTitle = $"RS2SharpEmulator {VERSION} - Rev #{Constants.SERVER_REV}";
+        public const double VERSION = 0.7;
 
         static void Main(string[] args)
         {
             playground();
 
-            var windowTitle = "Server Emulator Rev #" + Constants.SERVER_REV;
 #if DEBUG
-            DEBUG = true;
             windowTitle = "[DEBUG] " + windowTitle;
+            DebugRunTime = true;
 #endif     
             Console.Title = windowTitle;
 
 
             if (args.Length > 0)
                 if (args[0].ToLower().Equals("debug"))
-                    DEBUG = true;
+                    DebugRunTime = true;
 
 
-            if (Debugger.IsAttached && !DEBUG)
+            if (Debugger.IsAttached && !DebugRunTime)
                 return;
                 
 
@@ -50,7 +53,7 @@ namespace ServerEmulator.Core
 
             DataLoader.LoadContent();
 
-            Log("Server successfully initialized @ " + Thread.CurrentThread.ManagedThreadId);
+            Log("Server successfully initialized @Thread " + Thread.CurrentThread.ManagedThreadId);
 
             while(Processor.Running)
             {
@@ -91,7 +94,7 @@ namespace ServerEmulator.Core
 
         public static void Debug(string text, params object[] format)
         {
-            if(DEBUG)
+            if(DebugRunTime)
                 Log($"[DEBUG] {text}", format);
         }
 
@@ -121,13 +124,15 @@ namespace ServerEmulator.Core
          * purge <yes/no(listener)> = disconnects every player; the server keeps running
          * start = starts the listener
          * msg <message> = global message
-         * 
+         * limit = set a new connection limit for this session
+         * [DEBUG] cycletime = display average cycletime (last 10 min)
+         * [DEBUG] traffic = display average network traffic (last 10 min)
+         *
          * Player commands:
          * skill <player> <skill> <xp>
          * give <player> <item> <count>
          * kill <player>
-         * teleport <player> <coords>
-         * teletoplayer <player> <player>
+         * teleport <player> <coords/player>
          * rollback <player> <id>
          * 
          * */
@@ -151,7 +156,50 @@ namespace ServerEmulator.Core
         }
 
         static void playground() {
+            
             if(true) return;
+
+
+            BufferedEffectStates odes = new BufferedEffectStates();
+
+            var appear = odes.Appearance;
+
+            appear.appearanceValues = new int[] { -1, -1, -1, -1, 18, -1, 26, 36, 0, 33, 42, 10 };
+            appear.colorValues = new int[] { 7, 8, 9, 5, 0 };
+            appear.idleAnimations = new int[] { 808, 823, 819, 820, 821, 822, 824 };
+            appear.gender = 69;
+            appear.combatLevel = 69;
+            appear.skill = 2056;
+
+            for (int i = 0; i < 100; i++)
+            {
+                
+
+                if(i < 20) 
+                {
+                    var inc = odes.Incremental;
+                    odes.Reset();
+                    ;
+                } 
+                else if(i < 40) 
+                {
+                    var inc = odes.Full;
+                    odes.Reset();
+                    ;
+                }
+                else if(i < 60) 
+                {
+                    odes.Reset();
+                    break;
+                }
+
+
+            }
+            
+
+            if(true) return;
+
+
 
             List<bool> bits = new List<bool>();
             bits.EncodeValue(8, 156);

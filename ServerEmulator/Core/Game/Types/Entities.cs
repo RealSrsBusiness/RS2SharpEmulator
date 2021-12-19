@@ -8,21 +8,25 @@ namespace ServerEmulator.Core.Game
     public class PlayerEntity : Actor, ICloneable
     {
         public bool teleported = true, running = true;
-
         public bool justLoggedIn { get => teleported; }
+
         public Direction[] LastSteps { get; private set; } = new Direction[2] { Direction.NONE, Direction.NONE };
 
         Direction[] movement;
         int walkingQueue = -1;
 
-        internal AccessWatcher[] effects = new AccessWatcher[masks.Length];
+        BufferedEffectStates effects = new BufferedEffectStates();
 
-        internal PlayerEntity(int id, PlayerAppearance initAppearance)
-        {
-            effects[APPEARANCE_CHANGED] = new AccessWatcher(initAppearance, true);
-            effects[DAMAGE] = new AccessWatcher(new PlayerDamage());
-            effects[CHAT_TEXT] = new AccessWatcher(new PlayerChat());
-            effects[ANIMATION] = new AccessWatcher(new PlayerAnimation());
+        internal PlayerEntity(int id, Account account)
+        {   
+            base.id = id;
+            var appear = effects.Appearance;
+
+            //default values
+            appear.appearanceValues = new int[] { -1, -1, -1, -1, 18, -1, 26, 36, 0, 33, 42, 10 };
+            appear.colorValues = new int[] { 7, 8, 9, 5, 0 };
+            appear.idleAnimations = new int[] { 808, 823, 819, 820, 821, 822, 824 };
+            appear.username = account.displayname.ToLong();
 
             Update = () =>
             {
@@ -52,22 +56,9 @@ namespace ServerEmulator.Core.Game
             };
         }
 
-        internal void WriteEffects(RSStreamWriter data) 
+        
+        void DoDamage() 
         {
-            int mask = 0x0;
-
-            for (int i = 0; i < effects.Length; i++)
-            {
-                var effect = effects[i];
-                if(effect == null)
-                    continue;
-                    
-                mask |= masks[i];
-                effect.Value<Effect>().Write(data);
-            }
-        }
-
-        void DoDamage() {
             //effects.Damage.damage = 100;
         }
 
@@ -87,11 +78,6 @@ namespace ServerEmulator.Core.Game
         private object _lock = new object();
         public object Clone() => MemberwiseClone();
 
-
-        public static int FORCED_MOVEMENT = 0, GRAPHIC = 1, ANIMATION = 2, FORCED_CHAT = 3, CHAT_TEXT = 4, INTERACTING_ENTITY = 5, 
-        APPEARANCE_CHANGED = 6, FACING = 7, DAMAGE = 8, DAMAGE_2 = 9;
-
-        public static int[] masks = { 0x400, 0x100, 0x8, 0x4, 0x80, 0x1, 0x10, 0x2, 0x20, 0x200 };
     }
 
     public class NPCEntity : Actor

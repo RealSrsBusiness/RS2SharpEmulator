@@ -36,13 +36,7 @@ namespace ServerEmulator.Core.Game
 
             if(playerSlot != -1) 
             {
-                Player = new PlayerEntity(playerSlot, new PlayerAppearance 
-                {
-                    appearanceValues = new int[] { -1, -1, -1, -1, 18, -1, 26, 36, 0, 33, 42, 10 },
-                    colorValues = new int[] { 7, 8, 9, 5, 0 },
-                    idleAnimations = new int[] { 808, 823, 819, 820, 821, 822, 824 },
-                    username = account.displayname.ToLong()
-                });
+                Player = new PlayerEntity(playerSlot, account);
 
                 Player.x = 3200;
                 Player.y = 3200;
@@ -91,22 +85,22 @@ namespace ServerEmulator.Core.Game
              */
             List<bool> bits = new List<bool>();
             var effectUpdates = new RSStreamWriter(new MemoryStream());
-            var appearEffect = Player.effects[APPEARANCE_CHANGED];
+            //var appearEffect = Player.effects[APPEARANCE_CHANGED];
 
 
             if(Player.justLoggedIn) //or teleported
             {
-                EntityUpdates.LocalPlayerTeleported(ref bits, appearEffect.Changed, Player.LocalX, Player.LocalY, Player.z);
+                EntityUpdates.LocalPlayerTeleported(ref bits, false /*appearEffect.Changed*/, Player.LocalX, Player.LocalY, Player.z);
                 Player.teleported = false;
             }
             else 
             { 
                 var steps = Player.LastSteps;
-                EntityUpdates.LocalPlayerMovement(ref bits, appearEffect.Changed, (int)steps[0], (int)steps[1]);
+                EntityUpdates.LocalPlayerMovement(ref bits, false /*appearEffect.Changed*/, (int)steps[0], (int)steps[1]);
             }
 
             //todo: effects
-            Player.WriteEffects(effectUpdates);
+            //Player.WriteEffects(effectUpdates);
 
 
             var otherMovementList = new EntityUpdates.OtherEntitiesMovement(bits);

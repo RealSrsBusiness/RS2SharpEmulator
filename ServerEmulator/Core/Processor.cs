@@ -36,6 +36,10 @@ namespace ServerEmulator.Core
 
         void GameLoop()
         {
+#if DEBUG
+            int totalCycles = 0, cycleTime10Secs = 0;
+#endif
+
             Stopwatch sw = new Stopwatch();
             while (Running)
             {
@@ -48,8 +52,21 @@ namespace ServerEmulator.Core
                 foreach(var client in establishedClients)
                     client.RenderScreen();
 
-                //cleanup, like expiring effects so an effect with an old value like a hitsplit doesn't carry over to the next cycle
+                //cleanup, like expiring effects so effects that should only last 1 cycle e.g. hitsplats don't carry over to the next cycle
                 World.PerformPostProcess();
+
+#if DEBUG
+                totalCycles++;
+                cycleTime10Secs += (int)sw.ElapsedMilliseconds;
+
+                if(totalCycles % 16 == 0) //calculate average cycle time for about the last 10 seconds
+                {
+                    double average = cycleTime10Secs / 16.0;
+                    cycleTime10Secs = 0;
+                    Console.Title = $"{Program.windowTitle}; Cycle Time (10s): {average} ms"; 
+                    //; Transfer-rate: down: 2MBit/s up: 2MBit/s
+                }
+#endif
 
                 sw.Stop();
                 
@@ -60,8 +77,7 @@ namespace ServerEmulator.Core
                 }
                 else
                 {
-                    delayedCycles++;
-                    Program.Warning("Server can't keep up! Cycle took {0} ms, Delayed cycles: {1}", (int)sw.ElapsedMilliseconds, delayedCycles);
+                    Program.Warning("[{0}] Server can't keep up! Cycle took {1} ms longer.", ++delayedCycles, -remainingSleep);
                 }
                 sw.Reset();
             }

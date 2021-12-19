@@ -244,4 +244,6 @@ ModelManifest.xml
 /notes-updating.txt
 /todo.txt
 .vscode
-removed.txt
+
+# custom
+*.txt

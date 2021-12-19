@@ -10,7 +10,6 @@ namespace ServerEmulator.Core.Network
 {
     //delegate void Action();
 
-    //todo: review, use reflection to load packets
     class PacketHandler
     {
         Connection c;
@@ -20,7 +19,7 @@ namespace ServerEmulator.Core.Network
         Action[] handles;
         int dataLeft = -1;
 
-        public PacketHandler(Client client)
+        public PacketHandler(Client client) //todo: use reflection to load packets
         {
             this.client = client;
             c = client.Packets.c;
@@ -71,7 +70,7 @@ namespace ServerEmulator.Core.Network
             //throw new NotImplementedException();
         }
 
-        public void Handle(byte opCode, bool firstByte)
+        public void Handle(byte opCode, bool firstByte)  //todo: very confusing function, probably should rework
         {
             if (firstByte)
                 dataLeft = Constants.INCOMING_SIZES[opCode];

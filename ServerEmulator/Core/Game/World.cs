@@ -21,7 +21,7 @@ namespace ServerEmulator.Core.Game
 
         internal static void Init()
         {
-            if (Constants.MAP_LOADING_METHOD == 0 && !Program.DEBUG)
+            if (Constants.MAP_LOADING_METHOD == 0 && !Program.DebugRunTime)
                 Program.Warning("World Map is not loaded. The server wont verify clipping and objects. Only use this setting for testing.");
 
             for (int i = 0; i < regions.Length; i++)

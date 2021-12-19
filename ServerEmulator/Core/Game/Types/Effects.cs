@@ -5,60 +5,106 @@ using System.IO;
 
 namespace ServerEmulator.Core.Game
 {
-    class EffectStates //WatchedEffectStates
+    //holds effect data, buffers it and keeps track if something changed
+    class BufferedEffectStates //todo: optimization idea: save all buffers into a list shared by all clients and just clear it per cycle
     {
-        AccessWatcher[] effects = new AccessWatcher[] { 
-            null, //forced_movement
-            null, //graphic
-            new AccessWatcher(new PlayerAnimation()), 
-            null, //forced chat
-            new AccessWatcher(new PlayerChat()), 
-            null, //interacting_entity
-            new AccessWatcher(new PlayerAppearance()), 
-            null, //facing
-            new AccessWatcher(new PlayerDamage()), 
-            null, //damage2
-        };
+        public PlayerAnimation Animation => Get<PlayerAnimation>(ANIMATION);
+        public PlayerChat Chat => Get<PlayerChat>(CHAT);
+        public PlayerAppearance Appearance => Get<PlayerAppearance>(APPEARANCE);
+        public PlayerDamage Damage => Get<PlayerDamage>(DAMAGE);
 
-        public PlayerAnimation Animation => effects[ANIMATION].Value<PlayerAnimation>();
-        public PlayerChat Chat => effects[CHAT_TEXT].Value<PlayerChat>();
-        public PlayerAppearance Appearance => effects[APPEARANCE_CHANGED].Value<PlayerAppearance>();
-        public PlayerDamage Damage => effects[DAMAGE].Value<PlayerDamage>();
+        private T Get<T>(int index) where T : Effect, new() 
+        {
+            if(effects[index] == null)
+                effects[index] = new T();
+            
+            effects[index].needRefresh = true;
+            return (T)effects[index];
+        }
 
+        public byte[] Full {
+        get 
+        {
+            if(bufferFull == null)
+                bufferFull = BuildBuffer(true);
+            return bufferFull;
+        }}
         
-
-
-        const int FORCED_MOVEMENT = 0, GRAPHIC = 1, ANIMATION = 2, FORCED_CHAT = 3, CHAT_TEXT = 4, INTERACTING_ENTITY = 5, 
-        APPEARANCE_CHANGED = 6, FACING = 7, DAMAGE = 8, DAMAGE_2 = 9;
-
-
-        static int[] masks = { 0x400, 0x100, 0x8, 0x4, 0x80, 0x1, 0x10, 0x2, 0x20, 0x200 };
-    }
-
-    class AccessWatcher //todo: probably can be simplified and merged with EffectStates
-    {
-        internal AccessWatcher(object value, bool initChange = false) 
+        public byte[] Incremental {   
+        get 
         {
-            _value = value;
-            Changed = initChange;
+            if(bufferIncremental == null)
+                bufferIncremental = BuildBuffer(false);
+            return bufferIncremental;
+        }}
+
+        byte[] bufferFull, bufferIncremental; //incremental = only what changed from last cycle
+
+        private byte[] BuildBuffer(bool full) 
+        {
+            short mask = 0x0;
+
+            var writer = new RSStreamWriter(new MemoryStream());
+            for (int i = 0; i < effects.Length; i++)
+            {
+                var curEffect = effects[i];
+                if(curEffect == null)
+                    continue;
+
+                if(curEffect.needRefresh || (curEffect.Persistant && full))
+                {
+                    mask |= masks[i];
+                    curEffect.Write(writer);
+                }
+            }
+
+            int maskLength = ((mask >> 8) > 0) ? 2 : 1;
+            byte[] buffer = new byte[writer.BaseStream.Length + maskLength];
+            buffer[0] = (byte)mask;
+
+            if(maskLength == 2) {
+                buffer[0] |= DOUBLE_BYTE_MASK;
+                buffer[1] = (byte)(mask >> 8);
+            } 
+
+            writer.BaseStream.Position = 0;
+            writer.BaseStream.Read(buffer, maskLength, (int)writer.BaseStream.Length);
+
+            return buffer;
         }
 
-        public void Reset() => Changed = false;
-
-        internal T Value<T>() 
+        public void Reset() 
         {
-            Changed = true;
-            return (T)_value;
+            for (int i = 0; i < effects.Length; i++)
+            {
+                var curEffect = effects[i];
+                if(curEffect == null)
+                    continue;
+
+                if(curEffect.Persistant)
+                    curEffect.needRefresh = false;
+                else
+                    effects[i] = null;                    
+            }
+            bufferFull = null;
+            bufferIncremental = null;
         }
 
-        object _value;
-        public bool Changed { get; private set; }
+        Effect[] effects = new Effect[masks.Length];
+
+        const byte DOUBLE_BYTE_MASK = 0x40; //indicates that the mask should be encoded in 2 bytes instead of 1
+        static short[] masks = 
+            { 0x400, 0x100, 0x8, 0x4, 0x80, 0x1, 0x10, 0x2, 0x20, 0x200 }; //needs to be in a specific order as the client requires it
+
+        const int FORCED_MOVEMENT = 0, GRAPHIC = 1, ANIMATION = 2, FORCED_CHAT = 3, CHAT = 4, //corrosponds to "masks"
+        INTERACTING_ENTITY = 5, APPEARANCE = 6, FACING = 7, DAMAGE = 8, DAMAGE_2 = 9; 
     }
 
-    interface Effect 
+    abstract class Effect 
     {
-        int cycles { get; } //how long should the effect appear for; -1 = unlimited until changed
-        void Write(RSStreamWriter sw);
+        public abstract bool Persistant { get; } //does this effect last over multiple cycles? e.g. appearance, animation
+        public bool needRefresh; //a value changed, so the effect needs to be resent to the client
+        public abstract void Write(RSStreamWriter sw);
     }
 
     class PlayerAppearance : Effect
@@ -67,21 +113,12 @@ namespace ServerEmulator.Core.Game
         public long username;
 
         public byte combatLevel, gender, headicon;
-        public int[] appearanceValues, colorValues, idleAnimations;
+        public int[] appearanceValues = new int[12], colorValues = new int[5], idleAnimations = new int[7];
 
-        private byte[] buffer;
-
-        public int cycles => -1;
-
-        public void Write(RSStreamWriter sw_)
+        public override void Write(RSStreamWriter sw)
         {
-            if(buffer != null) {
-                sw_.WriteBytes(buffer, 0, buffer.Length);
-                return;
-            }
-
-            var sw = new RSStreamWriter(new MemoryStream());
-            sw.BaseStream.Position = 1; //reserve for length
+            long orgPosition = sw.BaseStream.Position; //start position
+            sw.BaseStream.Position++; //reserve 1 byte for length
 
             sw.WriteByte(gender);
             sw.WriteByte(headicon);
@@ -114,55 +151,57 @@ namespace ServerEmulator.Core.Game
             sw.WriteByte(combatLevel);
             sw.WriteShort(skill);
 
-            sw.BaseStream.Position = 0; //to get to the size position
-            byte size = (byte)(sw.BaseStream.Length - 1);
+            sw.BaseStream.Position = orgPosition; //to get to the size position
+            byte size = (byte)(sw.BaseStream.Length - orgPosition - 1);
             sw.WriteNegatedByte(size);
 
-            buffer = sw.BaseStream.ToArray();
-            sw_.WriteBytes(buffer, 0, buffer.Length);
+            sw.BaseStream.Position = orgPosition + size + 1;
         }
 
-        public void Clear() => buffer = null;
+        public override bool Persistant => true;
     }
 
     class PlayerAnimation : Effect 
     {
-        public int cycles => -1;
         public int animationId = 0, delay = 0;
 
-        public void Write(RSStreamWriter sw)
+        public override void Write(RSStreamWriter sw)
         {
             sw.WriteLEShort(animationId);
             sw.WriteNegatedByte(delay);
         }
+
+        public override bool Persistant => true;
     }
 
     class PlayerChat : Effect 
     {
-        public int cycles => 3;
-        public int textInfo = 0, privilage = 0, offset = 0;
+        public int textInfo = 0, privelage = 0, offset = 0;
 
-        public void Write(RSStreamWriter sw)
+        public override void Write(RSStreamWriter sw)
         {
             sw.WriteLEShort(textInfo);
-            sw.WriteByte(privilage);
+            sw.WriteByte(privelage);
             sw.WriteNegatedByte(offset);
             sw.WriteReverseDataA(new byte[0], 0, 0);
         }
+
+        public override bool Persistant => false;
     }
 
     class PlayerDamage : Effect
     {
-        public int cycles => 1;
         public int damage = 0, type = 0, health = 0, maxHealth = 0;
 
-        public void Write(RSStreamWriter sw)
+        public override void Write(RSStreamWriter sw)
         {
             sw.WriteByte(damage);
             sw.WriteByte(type);
             sw.WriteByte(health);
             sw.WriteByte(maxHealth);
         }
+
+        public override bool Persistant => false;
     }
 
     /*

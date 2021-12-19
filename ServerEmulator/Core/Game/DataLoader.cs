@@ -45,7 +45,7 @@ namespace ServerEmulator.Core.Game
 
         private static void Lists()
         {
-            if(Program.DEBUG)
+            if(Program.DebugRunTime)
                 Program.Warning("Content lists could not be loaded.");
         }
 
