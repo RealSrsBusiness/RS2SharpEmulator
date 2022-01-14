@@ -15,12 +15,12 @@ namespace ServerEmulator.Core.Game
         Direction[] movement;
         int walkingQueue = -1;
 
-        BufferedEffectStates effects = new BufferedEffectStates();
+        internal BufferedEffectStates effects = new BufferedEffectStates();
 
         internal PlayerEntity(int id, Account account)
         {   
             base.id = id;
-            var appear = effects.Appearance;
+            var appear = effects.Appearance; //also sets the "needRefresh" flag
 
             //default values
             appear.appearanceValues = new int[] { -1, -1, -1, -1, 18, -1, 26, 36, 0, 33, 42, 10 };
@@ -108,6 +108,7 @@ namespace ServerEmulator.Core.Game
     public class ObjectEntity : WorldEntity 
     {
         bool replaceObject;
+        int cyclesToExpire;
     }
 
     public class WorldEntity
@@ -123,7 +124,7 @@ namespace ServerEmulator.Core.Game
         public byte LocalX { get { return (byte)(x - (RegionX - 6) * 8); } }
         public byte LocalY { get { return (byte)(y - (RegionY - 6) * 8); } }
 
-        public Coordinate VerifyDistance(int x, int y, int steps = 16)
+        public Coordinate VerifyDistance(int x, int y, int steps = 15) //5 bits can only encode 32 values from from -16 to 15, counting zero
         {
             int difX = this.x - x;
             int difY = this.y - y;

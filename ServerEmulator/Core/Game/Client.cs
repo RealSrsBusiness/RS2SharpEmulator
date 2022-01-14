@@ -21,7 +21,7 @@ namespace ServerEmulator.Core.Game
 
         DateTime loginTime;
         int activeInterface = -1;
-        bool isFocused = true;
+        bool isFocused = true; //is window focused
 
         object[] customStates;
 
@@ -53,68 +53,108 @@ namespace ServerEmulator.Core.Game
             }
         }
 
+
         PlayerEntity[] localEntityList = new PlayerEntity[0];
-        int[] playerIdList, npcIdList;
 
         /// <summary>
         /// Builds all update packages that hold the current "screen" state
         /// </summary>
+        //todo: this all feels needlessly complicated; build an alternative version that only filters for existing players (instead of all nearby player) and use the inbuilt "contains" function for lists, see Flare for a reference; use this version only if performance is much better
         public void RenderScreen()
         {
-            //var blah = new { blub = 100, test = "string" };
-
-            var currentNearEntities = World.FindEntities<PlayerEntity>
-            ((PlayerEntity we) => {
-                return we.VerifyDistance(Player.x, Player.y) != Coordinate.NONE && we.id != Player.id; //filter for all entities except own player
-            }, -1);
-
-            var changes = localEntityList.Difference<PlayerEntity>(currentNearEntities);
-
-            //todo: do something with the changes.
+            CheckRegionChange(); //load new map if needed
          
-            localEntityList = currentNearEntities; //swap old entity list with new one
-
-            CheckRegionChange(); //load map if needed
-            
-
             /* Player Updating Process:
              * 0: update movement of own player and (if needed) set a flag to update effects 
              * 1: update movement of other players that are already in the player list, determine if effect updates are needed or if players need to be removed
              * 2: add new players to the player list, determine if an effect update is needed, load the appearance (not effects) if it's still buffered
              * 3: based on previously set flags we know which players need effect updates, parse and apply all effects to own player and other players
              */
-            List<bool> bits = new List<bool>();
-            var effectUpdates = new RSStreamWriter(new MemoryStream());
-            //var appearEffect = Player.effects[APPEARANCE_CHANGED];
+            var bits = new List<bool>(); //movement bits
+            var allEffectUpdates = new List<byte[]>(); //effect updates of all players that are on screen
 
+            //step 0
+            var ownEffectUpdate = Player.effects.Incremental;
+            var needOwnEffectUpdate = ownEffectUpdate[0] > 0; //array just contains 0 if effects haven't changed
 
-            if(Player.justLoggedIn) //or teleported
+            if(Player.justLoggedIn || Player.teleported) //redundant but more clear
             {
-                EntityUpdates.LocalPlayerTeleported(ref bits, false /*appearEffect.Changed*/, Player.LocalX, Player.LocalY, Player.z);
+                EntityUpdates.LocalPlayerTeleported(ref bits, needOwnEffectUpdate, Player.LocalX, Player.LocalY, Player.z);
                 Player.teleported = false;
             }
             else 
             { 
                 var steps = Player.LastSteps;
-                EntityUpdates.LocalPlayerMovement(ref bits, false /*appearEffect.Changed*/, (int)steps[0], (int)steps[1]);
+                EntityUpdates.LocalPlayerMovement(ref bits, needOwnEffectUpdate, (int)steps[0], (int)steps[1]); //can pass -1 if not moving
             }
 
-            //todo: effects
-            //Player.WriteEffects(effectUpdates);
+            if(needOwnEffectUpdate)
+                allEffectUpdates.Add(ownEffectUpdate);
 
 
-            var otherMovementList = new EntityUpdates.OtherEntitiesMovement(bits);
-            var playerList = new EntityUpdates.NewPlayerList(bits);
+            //step 1 + 2 + 3
+            var currentNearbyPlayers = World.FindEntities<PlayerEntity> //find all nearby entities, filter out own player
+                ((PlayerEntity we) => { 
+                    return we.VerifyDistance(Player.x, Player.y) != Coordinate.NONE && we.id != Player.id; //only filter for existing players maybe?
+                }, -1);
 
-            //todo: entities, player list
+            var otherPlayersMovement = new EntityUpdates.OtherEntitiesMovement(bits);
+            var newOnScreenPlayers = new EntityUpdates.NewPlayerList(bits);
 
-            otherMovementList.Finish();
-            playerList.Finish();
+            /* "Difference" returns values in the same order as the source array 
+                this is important because when existing players are updated the server doesn't send player indicies again
+                results from "FindEntities" might be in the wrong order, so we copy results from "Difference" instead */
+            var changes = localEntityList.Difference<PlayerEntity>(currentNearbyPlayers);
+            var newEntityList = new PlayerEntity[changes.Unchanged + changes.Added];
 
+            int position = 0;
+            for (int i = 0; i < changes.entries.Length; i++)
+            {
+                var entity = changes.entries[i].entry;
+                var changeType = changes.entries[i].changeType;
 
-            Packets.PlayerUpdate(bits, effectUpdates.BaseStream.ToArray()); //81
-            //Packets.NPCUpdate(null); //65
-            //Packets.RegionalUpdate(null); //60
+                switch(changeType) 
+                {
+                    case EntryChangeType.UNCHANGED: 
+                        var otherEffectUpdate = entity.effects.Incremental;
+                        var needEffectUpdate = otherEffectUpdate[0] > 0;
+
+                        otherPlayersMovement.Add( (int)entity.LastSteps[0], (int)entity.LastSteps[1], needEffectUpdate);
+
+                        if(needEffectUpdate)
+                            allEffectUpdates.Add(otherEffectUpdate);
+
+                        newEntityList[position++] = entity;
+                    break;
+
+                    case EntryChangeType.REMOVED: 
+                        otherPlayersMovement.Add(remove: true);
+                    break;
+
+                    case EntryChangeType.ADDED: 
+                        var distance = entity.VerifyDistance(Player.x, Player.y);
+                        var update = entity.effects.Full;
+                        var needUpdate = update[0] > 0; //is always true?
+
+                        newOnScreenPlayers.Add(entity.id, distance.x, distance.y, needUpdate, entity.teleported); //distance can only be up to 15, check "VerifyDistance"
+
+                        if(needUpdate)
+                            allEffectUpdates.Add(update);
+
+                        newEntityList[position++] = entity;
+                    break;
+                }
+            }
+            otherPlayersMovement.Finish();
+            newOnScreenPlayers.Finish();
+
+            localEntityList = newEntityList; //swap old entity list with new one
+
+            //todo: 01-14: fully test this function; implement chat, hitsplats and animations; 
+            //todo: 01-17: implement inventory and equipment; woodcutting test, object replacement
+            Packets.PlayerUpdate(bits, allEffectUpdates); //packet 81
+            //Packets.NPCUpdate(null); //packet 65
+            //Packets.RegionalUpdate(null); //packet 60
 
             Packets.Send();
         }
@@ -147,6 +187,7 @@ namespace ServerEmulator.Core.Game
             Packets.RunEnergy(100);
             Packets.Weight(30);
             Packets.SendMessage(WELCOME_MSG);
+            //Packets.SendMessage("[woodcut-test] Type ::axe to get an axe"); //todo: allow modules to have their own "on login" message
             //
             for (int i = 0; i < SIDE_BARS.Length; i++)
             {
@@ -160,7 +201,7 @@ namespace ServerEmulator.Core.Game
             }
 
             Packets.SetFriend("TestFriend", 80);
-            Packets.FriendList(2);
+            Packets.FriendList(2); //status 2 == online
             Packets.SetInterfaceText(2426, "Some Weapon");
 
             //ItemStack[] inv = new ItemStack[28];
@@ -185,7 +226,7 @@ namespace ServerEmulator.Core.Game
             Packets.SetPlayerContextMenu(1, false, "Attack");
             Packets.PlaySong(125);
 
-            Packets.WelcomeMessage(201, 2222, false, 100100, 6666);
+            Packets.WelcomePopup(201, 2222, false, 100100, 6666);
 
             Packets.Send();
         }

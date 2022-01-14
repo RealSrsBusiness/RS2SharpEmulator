@@ -86,8 +86,8 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteShort(weight);
         }
 
-        public void SpecialAttackAmt(int barId, int amount)
-        {
+        public void SpecialAttackAmt(int barId, int amount) 
+        { //kind of a weird one because there's no dedicated variable/packet to it
             c.WriteOpCode(INTF_HIDDEN);
             c.Writer.WriteByte(1);
             c.Writer.WriteShort(barId);
@@ -218,7 +218,7 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteByte(freq);
         }
 
-        public void WelcomeMessage(
+        public void WelcomePopup(
             byte daysSinceRec, ushort unreadMsg, 
             bool isMember, int lastIp, ushort daysLastLogin)
         {
@@ -274,15 +274,20 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteByte(world < 0 ? 0 : (world + 9));
         }
 
-        public void PlayerUpdate(List<bool> movementPlayerList, byte[] effectUpdates)
+        public void PlayerUpdate(List<bool> movementPlayerList, List<byte[]> effectUpdates)
         {
             var p = c.WriteOpCodeVar(PLAYER_UPDATE, VarSizePacket.Type.SHORT);
-            var bitArray = movementPlayerList.ToByteArray();
 
+            var bitArray = movementPlayerList.ToByteArray();
             c.Writer.BaseStream.Write(bitArray, 0, bitArray.Length);
-            c.Writer.BaseStream.Write(effectUpdates, 0, effectUpdates.Length);
-            
-            c.FinishVarPacket(p);
+
+            for (int i = 0; i < effectUpdates.Count; i++)
+            {
+                var byteChunk = effectUpdates[i];
+                c.Writer.BaseStream.Write(byteChunk, 0, byteChunk.Length);
+            }
+
+            c.FinishVarPacket(p); //todo: optimize: constantly copying arrays is probably not such a good idea (check Client.RenderScreen)
         }
 
         public void NPCUpdate(byte[] data)

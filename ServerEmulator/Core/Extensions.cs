@@ -5,20 +5,25 @@ using System.Text;
 
 namespace ServerEmulator.Core
 {
-    enum EntryChangeType : int { ADDED = 0, REMOVED = 1 }
-    class ListEntryChange<T> {
-        public T entry;
-        internal EntryChangeType change;
+    enum EntryChangeType : int { UNCHANGED = 0, REMOVED = 1, ADDED = 2 }
+
+    class ComparedListResult<T> 
+    {
+        public (T entry, EntryChangeType changeType)[] entries; //tuple
+        public int Unchanged, Removed, Added;
     }
 
     internal static class Extensions
     {
-        public static ListEntryChange<T>[] Difference<T>(this T[] source, T[] compareTo) where T : class 
+        public static ComparedListResult<T> Difference<T>(this T[] source, T[] compareTo, bool checkUnchanged = true) where T : class 
         {
-            var changes = new List<ListEntryChange<T>>();
+            var res = new ComparedListResult<T>();
+            var entries = new List<(T entry, EntryChangeType changeType)>(source.Length + compareTo.Length);
 
-            void Diff(T[] first, T[] second, EntryChangeType diffToSet) 
+            int Diff(T[] first, T[] second, EntryChangeType diffToSet, bool addUnchanged = false) 
             {
+                int count = 0;
+
                 for (int i = 0; i < first.Length; i++)
                 {
                     bool found = false;
@@ -27,24 +32,29 @@ namespace ServerEmulator.Core
                         if(first[i] == second[j]) 
                         {
                             found = true;
+                            if(addUnchanged) 
+                            {
+                                entries.Add( (first[i], EntryChangeType.UNCHANGED) );
+                                res.Unchanged++;
+                            }
                             break;
                         }
                     } 
 
                     if(!found) //not found in other list, therefor different
                     {
-                        changes.Add(new ListEntryChange<T> {
-                            change = diffToSet,
-                            entry = first[i]
-                        });
+                        count++;
+                        entries.Add( (first[i], diffToSet) );
                     }
                 }
+                return count;
             }
 
-            Diff(source, compareTo, EntryChangeType.REMOVED);
-            Diff(compareTo, source, EntryChangeType.ADDED);
+            res.Removed = Diff(source, compareTo, EntryChangeType.REMOVED, checkUnchanged);
+            res.Added = Diff(compareTo, source, EntryChangeType.ADDED);
 
-            return changes.ToArray();
+            res.entries = entries.ToArray();
+            return res;
         }
 
         public static void EncodeValue(this List<bool> array, int count, int value)
