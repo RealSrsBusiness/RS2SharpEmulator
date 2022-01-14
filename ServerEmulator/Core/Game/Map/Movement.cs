@@ -77,7 +77,7 @@ namespace ServerEmulator.Core.Game
                 for (int j = 0; j < steps; j++)
                     path.Add(direction);
 
-                //this coord is compared to the next coord in the next iteration
+                //this coord is compared to the next coord of the next iteration
                 lastX = coord.x;
                 lastY = coord.y;
             }

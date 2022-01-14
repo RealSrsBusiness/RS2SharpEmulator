@@ -48,7 +48,7 @@ namespace ServerEmulator.Core
                 //update all entities (actions, movement of players, npcs etc, effect updates)
                 World.ProcessWorld();
 
-                //update what all the clients "see" and send out packets; todo: this can be parallelized, since no writing is done at this point
+                //update what all the clients "see" and send out packets; todo: [optimize] this can be parallelized, since the state stays the same for the end of this cycle
                 foreach(var client in establishedClients)
                     client.RenderScreen();
 
@@ -59,12 +59,12 @@ namespace ServerEmulator.Core
                 totalCycles++;
                 cycleTime10Secs += (int)sw.ElapsedMilliseconds;
 
-                if(totalCycles % 16 == 0) //calculate average cycle time for about the last 10 seconds
+                if(totalCycles % 16 == 0) //calculate average cycle time for around the last 10 seconds
                 {
                     double average = cycleTime10Secs / 16.0;
                     cycleTime10Secs = 0;
                     Console.Title = $"{Program.windowTitle}; Cycle Time (10s): {average} ms"; 
-                    //; Transfer-rate: down: 2MBit/s up: 2MBit/s
+                    //todo: add network bandwitdh; ex: "Transfer-rate: down: 2MBit/s up: 2MBit/s"
                 }
 #endif
 
@@ -83,7 +83,7 @@ namespace ServerEmulator.Core
             }
         }
 
-        //todo: messy, find a better way to handle multithreading, AutoResetEvent?
+        //todo: ugly and messy, find a better way to handle multithreading; maybe AutoResetEvent?
         public void RegisterClient(Client client)
         {
             lock (_lock)

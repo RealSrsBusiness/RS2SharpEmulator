@@ -44,7 +44,7 @@ namespace ServerEmulator.Core.Game
         {
             short mask = 0x0;
 
-            var writer = new RSStreamWriter(new MemoryStream());
+            var writer = new RSStreamWriter(new MemoryStream()); //todo: optimize?
             for (int i = 0; i < effects.Length; i++)
             {
                 var curEffect = effects[i];
@@ -94,7 +94,7 @@ namespace ServerEmulator.Core.Game
 
         const byte DOUBLE_BYTE_MASK = 0x40; //indicates that the mask should be encoded in 2 bytes instead of 1
         static short[] masks = 
-            { 0x400, 0x100, 0x8, 0x4, 0x80, 0x1, 0x10, 0x2, 0x20, 0x200 }; //needs to be in a specific order as the client requires it
+            { 0x400, 0x100, 0x8, 0x4, 0x80, 0x1, 0x10, 0x2, 0x20, 0x200 }; //important: needs to be in the right order as it's specified in the client
 
         const int FORCED_MOVEMENT = 0, GRAPHIC = 1, ANIMATION = 2, FORCED_CHAT = 3, CHAT = 4, //corrosponds to "masks"
         INTERACTING_ENTITY = 5, APPEARANCE = 6, FACING = 7, DAMAGE = 8, DAMAGE_2 = 9; 
@@ -112,7 +112,7 @@ namespace ServerEmulator.Core.Game
         public ushort skill;
         public long username;
 
-        public byte combatLevel, gender, headicon;
+        public byte combatLevel = 10, gender, headicon;
         public int[] appearanceValues = new int[12], colorValues = new int[5], idleAnimations = new int[7];
 
         public override void Write(RSStreamWriter sw)

@@ -13,10 +13,11 @@ namespace ServerEmulator.Core.Game
     /// <summary>
     /// Represents the entire gameworld and operations that can be done in it
     /// with all players, objects, npcs and grounditems
-    /// extra: projectiles?, gfx? sound effects?
     /// </summary>
+    // extra: projectiles?, gfx? sound effects?
     static class World
     {
+        //todo: [optimize] region-based entity lists
         public static List<WorldEntity> globalEntities = new List<WorldEntity>();
 
         internal static void Init()
@@ -76,7 +77,7 @@ namespace ServerEmulator.Core.Game
                 globalEntities[i].PostProcess();
         }
 
-        //if region is set, this entity will only be updated if it's seen by a client in that region
+        //todo: if region is set, this entity will only be updated if it's seen by a client in that region
         public static void RegisterEntity(WorldEntity entity, Region updateRegion = null)
         {
             globalEntities.Add(entity);
@@ -91,13 +92,13 @@ namespace ServerEmulator.Core.Game
         //creates a path around obstacles to a target; used for higher-revision player walking and more complex NPC behaviour
         public static void FindPathAStar()
         {
-
+            //todo
         }
 
         //get a direct line to a target, ignore obstacles; used for following
         public static void FindDirectPath()
         {
-
+            //todo
         }
 
 

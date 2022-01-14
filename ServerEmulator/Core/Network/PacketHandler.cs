@@ -62,6 +62,7 @@ namespace ServerEmulator.Core.Network
 
         private void ObjectAction(int option)
         {
+            //todo: verify existance of object
             Console.WriteLine("on object");
         }
 
@@ -99,7 +100,7 @@ namespace ServerEmulator.Core.Network
             // Program.Debug("Idling...");
         }
 
-        private void MouseClick()
+        private void MouseClick() //todo: check if client is focused (anti-cheat)
         {
             // Program.Debug("Mouseclick");
         }
@@ -123,8 +124,8 @@ namespace ServerEmulator.Core.Network
             else 
                 Console.WriteLine("cmd not found");
 
-            if(cmd.Equals("ver")) {
-                Console.WriteLine("RS2SEm.v.1");
+            if(cmd.Equals("vrs")) {
+                Console.WriteLine("R-S2#E.2BC");
             }
         }
 

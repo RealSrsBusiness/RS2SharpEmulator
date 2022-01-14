@@ -6,24 +6,24 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
+using static ServerEmulator.Core.Extensions;
 
 namespace ServerEmulator.Core
 {
     /// <summary>
     /// Controls the server and loads and saves settings
     /// </summary>
-    
     internal class Program
     {
         public static Processor Processor { get; private set; }
         public static bool DebugRunTime { get; private set; } = false;
 
-        public static string windowTitle = $"RS2SharpEmulator {VERSION} - Rev #{Constants.SERVER_REV}";
+        public static string windowTitle = $"RS2SharpEmulator v.{VERSION} - Rev #{Constants.SERVER_REV}";
         public const double VERSION = 0.7;
 
         static void Main(string[] args)
         {
-            playground();
+            TestPlayground();
 
 #if DEBUG
             windowTitle = "[DEBUG] " + windowTitle;
@@ -78,10 +78,10 @@ namespace ServerEmulator.Core
             }
         }
 
-        public static void Log(string text, params object[] format)
+        public static void Log(string text, params object[] format) //todo: do it proper by replacing the standard output (Console.Out)
         {
-            DateTime dt = DateTime.Now;
-            Console.WriteLine("[{0}:{1}:{2}] {3}", dt.Hour, dt.Minute, dt.Second, string.Format(text, format));
+            DateTime dt = DateTime.Now; //...also there's a better (already in-built) way to format time
+            Console.WriteLine("[{0}:{1}:{2}] {3}", dt.Hour, dt.Minute, dt.Second, string.Format(text, format)); 
         }
 
         public static void Warning(string text, params object[] format)
@@ -110,8 +110,9 @@ namespace ServerEmulator.Core
         public static event Action Cleanup = delegate { };
 
         /* RS2SharpEmulator
-         * Server command suggestions:
+         * [todo: Server command suggestions]:
          * status = shows the status including listening port and bound socket; connected clients
+         * modules = show loaded modues
          * online = lists online players
          * count = number of players online
          * save = saves all players
@@ -155,11 +156,48 @@ namespace ServerEmulator.Core
 
         }
 
-        static void playground() {
-            
+        class MyInt 
+        {
+            public int value;
+
+            public MyInt(int value) => this.value = value;
+            public override string ToString() => value.ToString();
+        }
+
+        static void TestPlayground() {
             if(true) return;
 
+            var values = new MyInt[] {
+                new MyInt(1),
+                new MyInt(2),
+                new MyInt(3),
+                new MyInt(4),
+                new MyInt(5),
+                new MyInt(6),
+                new MyInt(7),
+                new MyInt(8),
+                new MyInt(9),
+                new MyInt(10),
 
+                new MyInt(20),
+                new MyInt(21),
+                new MyInt(12)
+            };
+
+
+            var l1 = new MyInt[]{values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], values[9]};
+            //var l2 = new MyInt[]{values[0], values[1], values[4], values[5], values[7], values[9], values[10], values[11], values[12]};
+            
+            var l2 = new MyInt[]{values[11], values[4], values[9], values[10], values[12], values[5], values[7], values[0], values[1]};
+            
+            ;
+            var res = l1.Difference<MyInt>(l2);
+            
+            
+            ;
+            //-----------------------------------------------------------------
+            
+        
             BufferedEffectStates odes = new BufferedEffectStates();
 
             var appear = odes.Appearance;
@@ -196,7 +234,7 @@ namespace ServerEmulator.Core
 
             }
             
-
+            //-----------------------------------------------------------------
             if(true) return;
 
 

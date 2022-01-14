@@ -93,7 +93,7 @@ namespace ServerEmulator.Core.NetworkProtocol
                         bits.EncodeValue(1, 1);
                         bits.EncodeValue(2, 0);
                     } 
-                    else if (remove) 
+                    else if (remove) //remove entity from screen
                     {
                         bits.EncodeValue(1, 1);
                         bits.EncodeValue(2, 3);

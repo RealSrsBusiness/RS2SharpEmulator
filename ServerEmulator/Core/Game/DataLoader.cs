@@ -36,7 +36,9 @@ namespace ServerEmulator.Core.Game
             ObjectMap();
             //MapXteas(); //untested
             Lists();
-            LoadModules(Assembly.GetExecutingAssembly());
+            int internalModules = LoadModules(Assembly.GetExecutingAssembly());
+
+            Console.WriteLine($"Finished loading modules: {internalModules} (Of which internal: {internalModules}, external: {0})");
 
             LoadingComplete = true;
 
@@ -49,7 +51,7 @@ namespace ServerEmulator.Core.Game
                 Program.Warning("Content lists could not be loaded.");
         }
 
-        private static void LoadModules(Assembly netAsm)
+        private static int LoadModules(Assembly netAsm)
         {
             var types = netAsm.GetTypes();
             int loaded = 0;
@@ -65,8 +67,7 @@ namespace ServerEmulator.Core.Game
                 }
             }
 
-            Console.WriteLine($"Loaded {loaded} modules.");
-
+            return loaded;
         }
 
         private static void ObjectMap()
