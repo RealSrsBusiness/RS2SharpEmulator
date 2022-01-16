@@ -13,7 +13,7 @@ namespace ServerEmulator.Core.Game
         public static int AddState(Type state)
         {
             if (DataLoader.LoadingComplete)
-                throw new InvalidOperationException("New states cannot be added once loading is completed.");
+                throw new InvalidOperationException("New states cannot be added once loading is complete.");
 
             states.Add(state);
             return states.IndexOf(state);
@@ -21,7 +21,7 @@ namespace ServerEmulator.Core.Game
 
         public NPC[] Npcs => DataLoader.Npcs;
         public Item[] Items => DataLoader.Items;
-        public GameObject[] Objects = DataLoader.Objects;
+        public GameObject[] Objects => DataLoader.Objects;
 
         public Dictionary<int, Action> ActionButtons => DataLoader.ActionButtons;
         public Definition PlayerActions => DataLoader.PlayerActions;

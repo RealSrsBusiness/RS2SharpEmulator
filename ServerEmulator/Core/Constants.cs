@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ServerEmulator.Core
 {
-    internal static class Constants
+    internal static class Constants //todo: config from a file
     {
         public const int PORT = 43594;
         public const int CYCLE_TIME = 600;
@@ -26,12 +26,20 @@ namespace ServerEmulator.Core
         public const string ACCOUNT_PATH = DATA_PATH + "accounts\\";
         public const string RSA_KEY_PAIR = DATA_PATH + "rsa.xml";
 
-        public static char[] VALID_CHARS = {
+        public static char[] VALID_CHARS_BASE37 = {
             '_', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
             'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2',
             '3', '4', '5', '6', '7', '8', '9', '!', '@', '#', '$', '%', '^', '&', '*',
             '(', ')', '-', '+', '=', ':', ';', '.', '>', '<', ',', '"', '[', ']', '|',
             '?', '/', '`'
+        };
+
+        public static char[] VALID_CHARS_CHAT = { 
+            ' ', 'e', 't', 'a', 'o', 'i', 'h', 'n', 's', 'r', 'd', 'l', 'u', 'm', 'w',
+            'c', 'y', 'f', 'g', 'p', 'b', 'v', 'k', 'x', 'j', 'q', 'z', '0', '1', '2',
+            '3', '4', '5', '6', '7', '8', '9', ' ', '!', '?', '.', ',', ':', ';', '(',
+            ')', '-', '&', '*', '\\', '\'', '@', '#', '+', '=', '£', '$', '%', '"', 
+            '[', ']' 
         };
 
         public static int[] OUTGOING_SIZES = {
@@ -92,7 +100,7 @@ namespace ServerEmulator.Core
 		    0, 0, 6, 6, 0, 0, 0            //250
 	    };
 
-        public static class LoginResponse
+        public static class LoginResponse //IIRC only some of these are part of the 317 protocol, rest is higher revision
         {
             public const sbyte TRY_AGAIN = -1;
             public const sbyte LOGGING_IN = 0;

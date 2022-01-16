@@ -6,7 +6,7 @@ using System.IO;
 namespace ServerEmulator.Core.Game
 {
     //holds effect data, buffers it and keeps track if something changed
-    class BufferedEffectStates //todo: optimization idea: save all buffers into a list shared by all clients and just clear it per cycle
+    class BufferedEffectStates //todo: optimization idea: save all buffers into a list shared by all clients and just clear it per cycle (instead of post processing)
     {
         public PlayerAnimation Animation => Get<PlayerAnimation>(ANIMATION);
         public PlayerChat Chat => Get<PlayerChat>(CHAT);
@@ -176,14 +176,17 @@ namespace ServerEmulator.Core.Game
 
     class PlayerChat : Effect 
     {
-        public int textInfo = 0, privelage = 0, offset = 0;
+        public string text;
+        public int color = 0, animationEffect = 0, playerRights = 0;
 
         public override void Write(RSStreamWriter sw)
         {
-            sw.WriteLEShort(textInfo);
-            sw.WriteByte(privelage);
-            sw.WriteNegatedByte(offset);
-            sw.WriteReverseDataA(new byte[0], 0, 0);
+            var bytesText = text.ToJagString();
+
+            sw.WriteLEShort(((color & 0xFF) << 8) + (animationEffect & 0xFF));
+            sw.WriteByte(playerRights); //privilege
+            sw.WriteNegatedByte(bytesText.Length);
+            sw.WriteReverseData(bytesText, bytesText.Length, 0);
         }
 
         public override bool Persistant => false;
@@ -196,8 +199,8 @@ namespace ServerEmulator.Core.Game
         public override void Write(RSStreamWriter sw)
         {
             sw.WriteByte(damage);
-            sw.WriteByte(type);
-            sw.WriteByte(health);
+            sw.WriteByteA(type); //0 to 4; blue, red, green, orange, sickness?
+            sw.WriteNegatedByte(health);
             sw.WriteByte(maxHealth);
         }
 

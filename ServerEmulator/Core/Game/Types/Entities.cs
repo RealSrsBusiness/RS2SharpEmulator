@@ -28,6 +28,8 @@ namespace ServerEmulator.Core.Game
             appear.idleAnimations = new int[] { 808, 823, 819, 820, 821, 822, 824 };
             appear.username = account.displayname.ToLong();
 
+            PostProcess = () => effects.Reset();
+
             Update = () =>
             {
                 lock(_lock)
@@ -62,7 +64,7 @@ namespace ServerEmulator.Core.Game
             //effects.Damage.damage = 100;
         }
 
-        public void SetMovement(Coordinate[] waypointCoords) //todo: sometimes causes a race condition
+        public void SetMovement(Coordinate[] waypointCoords) //todo: sometimes causes a race condition, i think?
         {
             lock(_lock)
             {
@@ -116,7 +118,8 @@ namespace ServerEmulator.Core.Game
         public int id;
         public int x, y, z;
 
-        public Action Update = delegate { }, PostProcess = delegate { }; //todo: replace with event?
+        public Action Update = delegate { }; //todo: replace with event?
+        internal Action PostProcess = delegate { }; //don't use this, this will be removed at one point
 
         public ushort RegionX { get { return (ushort)(x >> 3); } }
         public ushort RegionY { get { return (ushort)(y >> 3); } }
@@ -124,7 +127,7 @@ namespace ServerEmulator.Core.Game
         public byte LocalX { get { return (byte)(x - (RegionX - 6) * 8); } }
         public byte LocalY { get { return (byte)(y - (RegionY - 6) * 8); } }
 
-        public Coordinate VerifyDistance(int x, int y, int steps = 15) //5 bits can only encode 32 values from from -16 to 15, counting zero
+        public Coordinate VerifyDistance(int x, int y, int steps = 15) //5 bits can only encode 32 values, from -16 to 15 and 0
         {
             int difX = this.x - x;
             int difY = this.y - y;

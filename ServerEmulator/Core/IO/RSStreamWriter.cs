@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ServerEmulator.Core.IO
 {
-    class RSStreamWriter
+    class RSStreamWriter //todo: make naming scheme consistant with client
     {
         public MemoryStream BaseStream { get; set; }
 
@@ -27,6 +27,11 @@ namespace ServerEmulator.Core.IO
         public void WriteByteS(int i)
         {
             BaseStream.WriteByte((byte)(128 - i));
+        }
+
+        public void WriteByteA(int i) //readUByteA
+        {
+            BaseStream.WriteByte((byte)(128 + i));
         }
 
         //writeDWord
@@ -102,10 +107,10 @@ namespace ServerEmulator.Core.IO
             BaseStream.WriteByte((byte)-i);
         }
 
-        public void WriteReverseDataA(byte[] data, int length, int offset)
+        public void WriteReverseData(byte[] data, int length, int offset)
         {
-            for (int i = length + offset - 1; i >= length; i--)
-                BaseStream.WriteByte((byte)(data[i] + 128));
+            for (int i = (length + offset) - 1; i >= 0; i--)
+                BaseStream.WriteByte((byte)(data[i]));
         }
 
         public void WriteShort(int i)

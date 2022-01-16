@@ -10,6 +10,14 @@ namespace ServerEmulator.Content {
             this.Commands.Add("axe", (Client c) => {
                 
             });
+       
+
+            this.Objects[100] = new GameObject();
+
+            this.Objects[100].OnAction[0] = (Client c) => {
+
+            };
+
         }
     }
 

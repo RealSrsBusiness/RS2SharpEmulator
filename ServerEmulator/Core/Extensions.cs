@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.IO;
 
 namespace ServerEmulator.Core
 {
@@ -112,8 +113,9 @@ namespace ServerEmulator.Core
             {
                 long l1 = source;
                 source /= 37L;
-                ac[11 - i++] = Constants.VALID_CHARS[(int)(l1 - source * 37L)];
+                ac[11 - i++] = Constants.VALID_CHARS_BASE37[(int)(l1 - source * 37L)];
             }
+
             return new string(ac, 12 - i, i);
         }
 
@@ -133,8 +135,62 @@ namespace ServerEmulator.Core
             }
             while (l % 37L == 0L && l != 0L)
                 l /= 37L;
+
             return l;
         }
+
+        public static byte[] ToJagString(this string src) 
+        {
+            if (src.Length > 80)
+                src = src.Substring(0, 80);
+
+            MemoryStream stream = new MemoryStream();
+
+            src = src.ToLower();
+            int next = -1;
+
+            for (int index = 0; index < src.Length; index++) 
+            {
+                char character = src[index];
+                int charIndex = 0;
+
+                for (int idx = 0; idx < Constants.VALID_CHARS_CHAT.Length; idx++) 
+                {
+                    if (character != Constants.VALID_CHARS_CHAT[idx])
+                        continue;
+
+                    charIndex = idx;
+                    break;
+                }
+
+                if (charIndex > 12)
+                    charIndex += 195;
+
+                if (next == -1) 
+                {
+                    if (charIndex < 13)
+                        next = charIndex;
+                    else
+                        stream.WriteByte((byte)charIndex);
+                } 
+                else if (charIndex < 13) 
+                {
+                    stream.WriteByte((byte)((next << 4) + charIndex));
+                    next = -1;
+                } 
+                else 
+                {
+                    stream.WriteByte((byte)((next << 4) + (charIndex >> 4)));
+                    next = charIndex & 0xF;
+                }
+            }
+
+            if (next != -1)
+                stream.WriteByte((byte)(next << 4));
+
+            return stream.ToArray();
+        }
+
 
     }
 }
