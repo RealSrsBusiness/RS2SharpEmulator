@@ -21,6 +21,7 @@ namespace ServerEmulator.Core
         public static string windowTitle = $"RS2SharpEmulator v.{VERSION} - Rev #{Constants.SERVER_REV}";
         public const double VERSION = 0.7;
 
+        //todo: disallow clicking in console window because it causes the server to pause
         static void Main(string[] args)
         {
             TestPlayground();
@@ -165,6 +166,20 @@ namespace ServerEmulator.Core
         }
 
         static void TestPlayground() {
+            //ArraylistVsLinkedList();
+            if(true) return;
+
+            byte[] arr = "hello".ToJagString();
+
+            sbyte[] arr2 = new sbyte[arr.Length];
+
+            for (int i = 0; i < arr.Length; i++)
+            {
+                arr2[i] = (sbyte)arr[i];
+            }
+
+
+
             if(true) return;
 
             var values = new MyInt[] {
@@ -258,6 +273,50 @@ namespace ServerEmulator.Core
             var changes = src.Difference<Object>(trg);
             ;
 */
+        }
+
+        static void ArraylistVsLinkedList() {
+            LinkedList<object> linkedlist = new LinkedList<object>();
+            List<object> arraylist = new List<object>();
+
+            var mynode = linkedlist.AddFirst(new object());
+
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
+            for (int i = 0; i < 100000000; i++)
+            {
+                //mynode = linkedlist.AddAfter(mynode, new object());
+                //linkedlist.AddFirst()
+
+                //new LinkedListNode<object>(new object());
+
+                //arraylist.Add(new object());
+            }
+            sw.Stop();
+            var res1 = sw.ElapsedMilliseconds; //20 seconds linkedlist vs 4 seconds arraylist
+            ;
+            
+            
+
+            foreach (var item in linkedlist)
+            {
+                var blah = item.ToString();
+            }
+
+    
+
+            sw.Reset();
+            sw.Start();
+            foreach (var item in arraylist)
+            {
+                var blah = item.ToString();
+            }
+
+            var res2 = sw.ElapsedMilliseconds;
+            ;
+            
+
         }
         
        

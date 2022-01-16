@@ -122,7 +122,7 @@ namespace ServerEmulator.Core.Network
             if(dict.ContainsKey(cmd))
                 dict[cmd](client);
             else 
-                Console.WriteLine("cmd not found");
+                Console.WriteLine($"cmd not found: {cmd}");
 
             if(cmd.Equals("vrs")) {
                 Console.WriteLine("R-S2#E.2BC");

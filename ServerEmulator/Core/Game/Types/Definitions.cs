@@ -21,6 +21,7 @@ namespace ServerEmulator.Core.Game
         int clippingMask;
         bool projectilesPassThrough;
         bool hasToBeClose; //based on actions?
+        //group: WALL (includes doors), WALL_DECORATION, INTERACTABLE, FLOOR_DECORATION
         //size?
     }
 
@@ -29,6 +30,7 @@ namespace ServerEmulator.Core.Game
         bool noteable, tradeable, stackable, equipable, members;
         int weight, alching, dropType;
         string examine;
+        //equipment stats (if equipable)
     }
 
     class NPC : Definition

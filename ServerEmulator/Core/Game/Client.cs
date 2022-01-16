@@ -107,6 +107,7 @@ namespace ServerEmulator.Core.Game
             var changes = localEntityList.Difference<PlayerEntity>(currentNearbyPlayers);
             var newEntityList = new PlayerEntity[changes.Unchanged + changes.Added];
 
+
             int position = 0;
             for (int i = 0; i < changes.entries.Length; i++)
             {
@@ -149,13 +150,12 @@ namespace ServerEmulator.Core.Game
             newOnScreenPlayers.Finish();
 
             localEntityList = newEntityList; //swap old entity list with new one
-
-            //todo: 01-14: fully test this function; implement chat, hitsplats and animations; 
-            //todo: 01-17: implement inventory and equipment; woodcutting test, object replacement
             Packets.PlayerUpdate(bits, allEffectUpdates); //packet 81
             //Packets.NPCUpdate(null); //packet 65
             //Packets.RegionalUpdate(null); //packet 60
 
+            //todo: 01-14: fully test this function; implement chat, hitsplats and animations; 
+            //todo: 01-17: implement inventory and equipment; woodcutting test, object replacement
             Packets.Send();
         }
 
@@ -243,8 +243,8 @@ namespace ServerEmulator.Core.Game
         }
 
         public static int AllocPlayerSlot() //find free player slot
-        {
-            for (int i = 0; i < playerSlots.Length; i++)
+        { //skip 0 because the player with that id cannot be interacted with (probably reserved for admins or debugging)
+            for (int i = 1; i < playerSlots.Length; i++) 
             {
                 if (!playerSlots[i])
                 {

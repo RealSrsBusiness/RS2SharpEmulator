@@ -15,7 +15,7 @@ namespace ServerEmulator.Core
     {
         Thread clientAcceptor, gameProcessing;
         List<Connection> connections = new List<Connection>(MAX_CONNECTIONS);
-        List<Client> establishedClients = new List<Client>(MAX_PLAYER);
+        List<Client> establishedClients = new List<Client>(MAX_PLAYER); //a linked list is probably better suited
         Socket listener;
 
         private int delayedCycles;
@@ -49,7 +49,7 @@ namespace ServerEmulator.Core
                 World.ProcessWorld();
 
                 //update what all the clients "see" and send out packets; todo: [optimize] this can be parallelized, since the state stays the same for the end of this cycle
-                foreach(var client in establishedClients)
+                foreach(var client in establishedClients) //todo: issue: modifying the list from a different thread while it's being iterated on (disconnect or connect)
                     client.RenderScreen();
 
                 //cleanup, like expiring effects so effects that should only last 1 cycle e.g. hitsplats don't carry over to the next cycle
@@ -83,7 +83,7 @@ namespace ServerEmulator.Core
             }
         }
 
-        //todo: ugly and messy, find a better way to handle multithreading; maybe AutoResetEvent?
+        //todo: ugly and messy, find a better way to handle multithreading; maybe look into AutoResetEvent?
         public void RegisterClient(Client client)
         {
             lock (_lock)

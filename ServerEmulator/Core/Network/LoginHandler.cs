@@ -77,7 +77,7 @@ namespace ServerEmulator.Core.Network
                     crcs[i] = c.Reader.ReadInt();
 
                 byte sizeLeft = c.Reader.ReadByteAsUByte();
-                byte magicRsaNumber = c.Reader.ReadByteAsUByte(); //10
+                byte magicRsaNumber = c.Reader.ReadByteAsUByte(); //10, used to check whether decryption was sucessfull
 
                 int[] isaacSeed = new int[4];
                 for (int i = 0; i < isaacSeed.Length; i++)
@@ -94,12 +94,12 @@ namespace ServerEmulator.Core.Network
 
                 //todo: RSA encryption
                 string username = c.Reader.ReadString();
-                string password = c.Reader.ReadString();
+                string password = c.Reader.ReadString(); //JX even transmits the pw case sensitive, why is case ignored in the real game then? 
 
                 bool allRead = c.Reader.BaseStream.Position == c.Reader.BaseStream.Length;
 
                 sbyte response = -1;
-                Account acc = Account.Load(username, password, out response);
+                Account acc = Account.Load(username, password, out response); //todo: not multithreading friendly
                 c.Writer.WriteByte(response);
 
                 if(response == LOGIN_OK)

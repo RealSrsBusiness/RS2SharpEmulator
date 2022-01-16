@@ -63,14 +63,14 @@ namespace ServerEmulator.Core.Game
         public static Account Load(string username, string password, out sbyte response)
         {
             Account a = new Account(username, "Player", password, Rights.ADMIN);
-            a.gender = Gender.MALE;
+            a.gender = Gender.FEMALE;
 
             response = LoginResponse.LOGIN_OK;
             return a;
         }
 
 
-        public static void Save(Account a)
+        public static void Save(Account a) //todo: maybe save into an sqlite database or look into b-trees
         {
             FileStream fs = new FileStream(ACCOUNT_PATH + a.username + ".xml", FileMode.Create);
 
