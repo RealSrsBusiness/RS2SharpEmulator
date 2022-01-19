@@ -53,6 +53,18 @@ namespace ServerEmulator.Core.Game
             }
         }
 
+        public void SpawnObjectForClient() { //todo: remove: test
+            //localx and y might be wrong, todo: actually learn map arithmetic
+            //int a = Player.RegionX;
+            //int b = Player.LocalX;
+
+            Packets.PositionLoadedMap((byte)xOnMap, (byte)yOnMap);
+
+            Packets.AddObject(5628, 10, 0);
+
+            Packets.Send();
+        }
+
 
         PlayerEntity[] localEntityList = new PlayerEntity[0];
 
@@ -79,7 +91,7 @@ namespace ServerEmulator.Core.Game
 
             if(Player.justLoggedIn || Player.teleported) //redundant but more clear
             {
-                EntityUpdates.LocalPlayerTeleported(ref bits, needOwnEffectUpdate, Player.LocalX, Player.LocalY, Player.z);
+                EntityUpdates.LocalPlayerTeleported(ref bits, needOwnEffectUpdate, Player.XInMiddleChunk, Player.YInMiddleChunk, Player.z);
                 Player.teleported = false;
             }
             else 
@@ -159,22 +171,20 @@ namespace ServerEmulator.Core.Game
             Packets.Send();
         }
 
+        int mapOriginX, mapOriginY; //global origin(0x0) position for currently loaded map segment (104x104)
+        int xOnMap, yOnMap; //player position on map
 
-        int regionOriginX = 0, regionOriginY = 0;
-        //int movedX = 0, movedY = 0;
         private void CheckRegionChange()
-        {
-            //how far are we from the region origin?
-            int movedX = Player.x - regionOriginX;
-            int movedY = Player.y - regionOriginY;
+        { 
+            xOnMap = Player.x - mapOriginX;
+            yOnMap = Player.y - mapOriginY;
 
-            //if we moved far enough, we need to load a new map.
-            if (movedX < -35 || movedX > 42 || movedY < -35 || movedY > 42)
+            if(xOnMap < 13 || xOnMap > 90 || yOnMap < 13 || yOnMap > 90) //13 tiles away from the edge
             {
-                regionOriginX = Player.RegionX << 3;
-                regionOriginY = Player.RegionY << 3;
+                Packets.LoadRegion(Player.MapChunkX, Player.MapChunkY);
 
-                Packets.LoadRegion(Player.RegionX, Player.RegionY);
+                mapOriginX = Player.SegmentOriginX;
+                mapOriginY = Player.SegmentOriginY;
             }
         }
 

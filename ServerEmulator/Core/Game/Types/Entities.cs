@@ -121,11 +121,17 @@ namespace ServerEmulator.Core.Game
         public Action Update = delegate { }; //todo: replace with event?
         internal Action PostProcess = delegate { }; //don't use this, this will be removed at one point
 
-        public ushort RegionX { get { return (ushort)(x >> 3); } }
-        public ushort RegionY { get { return (ushort)(y >> 3); } }
+        //chunk of 8 tiles, also called "region" in client
+        public ushort MapChunkX => (ushort)(x / 8); //same as "y >> 3", (base)2 ^ 3 = 8
+        public ushort MapChunkY => (ushort)(y / 8); 
 
-        public byte LocalX { get { return (byte)(x - (RegionX - 6) * 8); } }
-        public byte LocalY { get { return (byte)(y - (RegionY - 6) * 8); } }
+        //a map segment of 104x104 tiles consists of 13 chunks along each axis, this assumes the middle position and "goes back" 6 chunks to get to the origin
+        public int SegmentOriginX => (MapChunkX - 6) * 8; //where the map segment would be at 0x0
+        public int SegmentOriginY => (MapChunkY - 6) * 8; 
+
+        //the X and Y in the middle(7th) chunk, can range from 48 to 55 (inclusive), first 6 chunks: 0-47, last 6 chunks: 56-103
+        public byte XInMiddleChunk => (byte)(x - SegmentOriginX);
+        public byte YInMiddleChunk => (byte)(y - SegmentOriginY);
 
         public Coordinate VerifyDistance(int x, int y, int steps = 15) //5 bits can only encode 32 values, from -16 to 15 and 0
         {
