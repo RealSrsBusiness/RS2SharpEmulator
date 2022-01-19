@@ -113,7 +113,7 @@ namespace ServerEmulator.Core
             {
                 long l1 = source;
                 source /= 37L;
-                ac[11 - i++] = Constants.VALID_CHARS_BASE37[(int)(l1 - source * 37L)];
+                ac[11 - i++] = Constants.CHARACTER_MAP_INT64[(int)(l1 - source * 37L)];
             }
 
             return new string(ac, 12 - i, i);
@@ -139,7 +139,7 @@ namespace ServerEmulator.Core
             return l;
         }
 
-        public static byte[] ToJagString(this string src) 
+        public static byte[] ToRSChatString(this string src) 
         {
             if (src.Length > 80)
                 src = src.Substring(0, 80);
@@ -154,9 +154,9 @@ namespace ServerEmulator.Core
                 char character = src[index];
                 int charIndex = 0;
 
-                for (int idx = 0; idx < Constants.VALID_CHARS_CHAT.Length; idx++) 
+                for (int idx = 0; idx < Constants.CHARACTER_MAP_CHAT.Length; idx++) 
                 {
-                    if (character != Constants.VALID_CHARS_CHAT[idx])
+                    if (character != Constants.CHARACTER_MAP_CHAT[idx])
                         continue;
 
                     charIndex = idx;

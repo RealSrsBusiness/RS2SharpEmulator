@@ -26,7 +26,7 @@ namespace ServerEmulator.Core
         public const string ACCOUNT_PATH = DATA_PATH + "accounts\\";
         public const string RSA_KEY_PAIR = DATA_PATH + "rsa.xml";
 
-        public static char[] VALID_CHARS_BASE37 = {
+        public static char[] CHARACTER_MAP_INT64 = {
             '_', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
             'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2',
             '3', '4', '5', '6', '7', '8', '9', '!', '@', '#', '$', '%', '^', '&', '*',
@@ -34,12 +34,12 @@ namespace ServerEmulator.Core
             '?', '/', '`'
         };
 
-        public static char[] VALID_CHARS_CHAT = { 
+        public static char[] CHARACTER_MAP_CHAT = { 
             ' ', 'e', 't', 'a', 'o', 'i', 'h', 'n', 's', 'r', 'd', 'l', 'u', 'm', 'w',
             'c', 'y', 'f', 'g', 'p', 'b', 'v', 'k', 'x', 'j', 'q', 'z', '0', '1', '2',
             '3', '4', '5', '6', '7', '8', '9', ' ', '!', '?', '.', ',', ':', ';', '(',
-            ')', '-', '&', '*', '\\', '\'', '@', '#', '+', '=', '£', '$', '%', '"', 
-            '[', ']' 
+            ')', '-', '&', '*', '\\', '\'', '@', '#', '+', '=', '£', '$', '%', '"', '[', 
+            ']' 
         };
 
         public static int[] OUTGOING_SIZES = {

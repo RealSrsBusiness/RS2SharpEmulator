@@ -181,7 +181,7 @@ namespace ServerEmulator.Core.Game
 
         public override void Write(RSStreamWriter sw)
         {
-            var bytesText = text.ToJagString();
+            var bytesText = text.ToRSChatString();
 
             sw.WriteLEShort(((color & 0xFF) << 8) + (animationEffect & 0xFF));
             sw.WriteByte(playerRights); //privilege

@@ -94,7 +94,7 @@ namespace ServerEmulator.Core.Network
 
                 //todo: RSA encryption
                 string username = c.Reader.ReadString();
-                string password = c.Reader.ReadString(); //JX even transmits the pw case sensitive, why is case ignored in the real game then? 
+                string password = c.Reader.ReadString(); //pw is even transmitted case sensitive, why is it ignored in the real game then? 
 
                 bool allRead = c.Reader.BaseStream.Position == c.Reader.BaseStream.Length;
 

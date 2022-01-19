@@ -21,7 +21,9 @@ namespace ServerEmulator.Core.Game
         int clippingMask;
         bool projectilesPassThrough;
         bool hasToBeClose; //based on actions?
-        //group: WALL (includes doors), WALL_DECORATION, INTERACTABLE, FLOOR_DECORATION
+        
+        //group: WALL (0, includes doors), WALL_DECORATION(1), INTERACTABLE(2), FLOOR_DECORATION(3)
+        //type: TYPE_TO_GROUP: { 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3 }
         //size?
     }
 

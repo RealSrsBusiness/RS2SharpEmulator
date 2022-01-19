@@ -19,7 +19,7 @@ namespace ServerEmulator.Core
         public static bool DebugRunTime { get; private set; } = false;
 
         public static string windowTitle = $"RS2SharpEmulator v.{VERSION} - Rev #{Constants.SERVER_REV}";
-        public const double VERSION = 0.7;
+        public const double VERSION = 0.71;
 
         //todo: disallow clicking in console window because it causes the server to pause
         static void Main(string[] args)
@@ -169,7 +169,7 @@ namespace ServerEmulator.Core
             //ArraylistVsLinkedList();
             if(true) return;
 
-            byte[] arr = "hello".ToJagString();
+            byte[] arr = "hello".ToRSChatString();
 
             sbyte[] arr2 = new sbyte[arr.Length];
 
