@@ -53,18 +53,23 @@ namespace ServerEmulator.Core.Game
             }
         }
 
-        public void SpawnObjectForClient() { //todo: remove: test
-            //localx and y might be wrong, todo: actually learn map arithmetic
-            //int a = Player.RegionX;
-            //int b = Player.LocalX;
-
-            Packets.PositionLoadedMap((byte)xOnMap, (byte)yOnMap);
-
-            Packets.AddObject(5628, 10, 0);
+/*
+        public void SpawnObjectForClient(int id) //todo: remove test
+        { 
+            Packets.LoadedMapPosition((byte)xOnMap, (byte)yOnMap);
+            Packets.AddObject((ushort)id, 10, 0, 1);
 
             Packets.Send();
         }
 
+        public void RemoveObject() 
+        {
+            Packets.LoadedMapPosition((byte)xOnMap, (byte)yOnMap);
+            Packets.RemoveObject(10, 0, 1);
+            Packets.Send();
+
+        }
+*/
 
         PlayerEntity[] localEntityList = new PlayerEntity[0];
 
@@ -91,7 +96,7 @@ namespace ServerEmulator.Core.Game
 
             if(Player.justLoggedIn || Player.teleported) //redundant but more clear
             {
-                EntityUpdates.LocalPlayerTeleported(ref bits, needOwnEffectUpdate, Player.XInMiddleChunk, Player.YInMiddleChunk, Player.z);
+                EntityUpdates.LocalPlayerTeleported(ref bits, needOwnEffectUpdate, Player.XMiddleChunk, Player.YMiddleChunk, Player.z);
                 Player.teleported = false;
             }
             else 
@@ -226,10 +231,11 @@ namespace ServerEmulator.Core.Game
 
             Packets.SetItems(3214, inv); //inventory
 
-            ItemStack[] equip = new ItemStack[14];
+            ItemStack[] equip = new ItemStack[15];
 
+            int equipId = 1200;
             for (int i = 0; i < equip.Length; i++)
-                equip[i] = new ItemStack() { id = 1205, amount = 1 };
+                equip[i] = new ItemStack() { id = equipId++, amount = 1 };
 
 
             Packets.SetItems(1688, equip);
@@ -241,10 +247,7 @@ namespace ServerEmulator.Core.Game
             Packets.Send();
         }
 
-        public T State<T>(int index)
-        {
-            return (T)customStates[index];
-        }
+        public T State<T>(int index) => (T)customStates[index];
 
         void OnDisconnect()
         {
