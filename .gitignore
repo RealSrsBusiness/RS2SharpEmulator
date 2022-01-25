@@ -240,10 +240,9 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
-/PluginTest
-/notes-updating.txt
-/todo.txt
-.vscode
 
 # custom
+.vscode
+/PluginTest
 *.txt
+*.png
