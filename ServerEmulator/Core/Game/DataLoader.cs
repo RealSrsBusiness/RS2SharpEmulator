@@ -6,6 +6,10 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using static ServerEmulator.Core.Constants;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+
+using System.Xml;
 
 using Microsoft.CSharp;
 using System.CodeDom;
@@ -44,14 +48,40 @@ namespace ServerEmulator.Core.Game
             Program.Log("All data loaded.");
         }
 
-        private static void Lists()
-        {
-            if(Program.DebugRunTime)
-                Program.Warning("Content lists could not be loaded.");
-
-            Objects = new GameObject[1000];
+        class MyType {
+            public int a { get; set; }
         }
 
+        private static void Lists()
+        {
+            if(Program.DebugRunTime) 
+            {
+                Program.Warning("Content lists not loaded, using empty values instead");
+
+                //default 317 amounts
+                Items = new Item[6541]; //6541
+                Npcs = new NPC[2633]; //2633
+                Objects = new GameObject[9399]; //9399
+            }
+
+            var options = new JsonSerializerOptions 
+            {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault, //null or default value
+                WriteIndented = true //pretty printing
+            };
+                
+            var coolObject = new MyType[] {
+                new MyType { a = 10 },
+                new MyType { a = 20 },
+                new MyType { a = 30 },
+            };
+
+            var result = JsonSerializer.Serialize(coolObject, options);
+            //File.WriteAllText("coolfile.json", result);
+            ;
+        }
+
+        
         private static int LoadModules(Assembly netAsm)
         {
             var types = netAsm.GetTypes();

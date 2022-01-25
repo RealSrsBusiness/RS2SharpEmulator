@@ -27,7 +27,7 @@ namespace ServerEmulator.Core.Network
         public void SendMessage(string msg)
         {
             var pos = c.WriteOpCodeVar(MSG_SEND);
-            c.Writer.WriteJString(msg);
+            c.Writer.WriteTerminatedString(msg);
             c.FinishVarPacket(pos);
         }
 
@@ -67,7 +67,7 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteByte(lvl);
         }
 
-        public void LocalPosition(byte x, byte y)
+        public void LoadedMapPosition(byte x, byte y) //position on a 104x104 map segment (equates to exacly 1 map file)
         {
             c.WriteOpCode(PLAYER_LOCATION);
             c.Writer.WriteNegatedByte(y);
@@ -102,7 +102,7 @@ namespace ServerEmulator.Core.Network
             var p = c.WriteOpCodeVar(PLAYER_RIGHTCLICK);
             c.Writer.WriteNegatedByte(indexId);
             c.Writer.WriteByte(isPrimary ? 1 : 0);
-            c.Writer.WriteJString(text);
+            c.Writer.WriteTerminatedString(text);
             c.FinishVarPacket(p);
         }
     
@@ -137,7 +137,7 @@ namespace ServerEmulator.Core.Network
             c.FinishVarPacket(p);
         }
 
-        public void SetItemSlots()
+        public void SetItemsBySlots()
         {
             var p = c.WriteOpCodeVar(ITEM_SLOT_SET, VarSizePacket.Type.SHORT);
         }
@@ -162,12 +162,19 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteByte(set ? 1 : 0);
         }
 
-        public void AddObject(int position, ushort id, byte data)
+        public void AddObject(ushort id, byte type, byte orientation /*from 0 to 3*/, byte offsetX = 0, byte offsetY = 0)
         {
             c.WriteOpCode(OBJ_ADD);
-            c.Writer.WriteByte(position);
-            c.Writer.WriteShort(id);
-            c.Writer.WriteByte(data);
+            c.Writer.WriteByte(((offsetX & 7) << 4) | (offsetY & 7));
+            c.Writer.WriteLEShort(id);
+            c.Writer.WriteByteS((type << 2) | (orientation & 3));
+        }
+
+        public void RemoveObject(byte type, byte orientation, byte offsetX = 0, byte offsetY = 0) 
+        {
+            c.WriteOpCode(OBJ_REMOVE);
+            c.Writer.WriteNegatedByte((type << 2) | (orientation & 3));
+            c.Writer.WriteByte(((offsetX & 7) << 4) | (offsetY & 7));
         }
 
         public void CreateProjectile(
@@ -239,7 +246,7 @@ namespace ServerEmulator.Core.Network
         public void SetInterfaceText(int id, string text)
         {
             var p = c.WriteOpCodeVar(INTF_TEXT_ADD, VarSizePacket.Type.SHORT);
-            c.Writer.WriteJString(text);
+            c.Writer.WriteTerminatedString(text);
             c.Writer.WriteShortA(id);
             c.FinishVarPacket(p);
         }

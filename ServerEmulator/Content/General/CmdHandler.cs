@@ -26,16 +26,26 @@ namespace ServerEmulator.Content {
                 animation.delay = 0;
             });
 
+            this.Commands.Add("obj", (Client c) => {
+                //c.SpawnObjectForClient(5628);
+            });
+
+            this.Commands.Add("stump", (Client c) => {
+                //c.SpawnObjectForClient(1341);
+            });
+
+            this.Commands.Add("rem", (Client c) => {
+                //c.RemoveObject();
+            });
+
             this.Commands.Add("all", (Client c) => {
                 var dmg = c.Player.effects.Damage;
                 dmg.damage = 20;
                 dmg.type = 2;
-                dmg.health = 1;
                 dmg.maxHealth = 99;
 
                 var animation = c.Player.effects.Animation;
-                animation.animationId = 733; //lighting logs
-                animation.delay = 0;
+                animation.animationId = 875;
 
                 var chat = c.Player.effects.Chat;
                 chat.text = "Hello World!";

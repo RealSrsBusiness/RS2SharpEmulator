@@ -62,6 +62,10 @@ namespace ServerEmulator.Core.Network
 
         private void ObjectAction(int option)
         {
+            int locX = reader.ReadLEShortA();
+            short id = (short)reader.ReadShort();
+            int locY = reader.ReadUShortA();
+
             //todo: verify existance of object
             Console.WriteLine("on object");
         }

@@ -58,7 +58,6 @@ namespace ServerEmulator.Core.Game
             };
         }
 
-        
         void DoDamage() 
         {
             //effects.Damage.damage = 100;
@@ -76,6 +75,11 @@ namespace ServerEmulator.Core.Game
                     walkingQueue = -1;
             }
         }
+
+        /* 
+            1200 = head, 1201 = cape, 1202 = amulet, 1203 = sword/weapon, 1204 = chest, 1205 = shield, 
+            [1206], 1207 = legs, [1208], 1209 = gloves, 1210 = boots, [1211], 1212 = ring, 1213 = arrows, [1214] 
+        */
 
         private object _lock = new object();
         public object Clone() => MemberwiseClone();
@@ -122,16 +126,16 @@ namespace ServerEmulator.Core.Game
         internal Action PostProcess = delegate { }; //don't use this, this will be removed at one point
 
         //chunk of 8 tiles, also called "region" in client
-        public ushort MapChunkX => (ushort)(x / 8); //same as "y >> 3", (base)2 ^ 3 = 8
+        public ushort MapChunkX => (ushort)(x / 8); //same as "x >> 3", (base)2 ^ 3 = 8
         public ushort MapChunkY => (ushort)(y / 8); 
 
         //a map segment of 104x104 tiles consists of 13 chunks along each axis, this assumes the middle position and "goes back" 6 chunks to get to the origin
         public int SegmentOriginX => (MapChunkX - 6) * 8; //where the map segment would be at 0x0
         public int SegmentOriginY => (MapChunkY - 6) * 8; 
 
-        //the X and Y in the middle(7th) chunk, can range from 48 to 55 (inclusive), first 6 chunks: 0-47, last 6 chunks: 56-103
-        public byte XInMiddleChunk => (byte)(x - SegmentOriginX);
-        public byte YInMiddleChunk => (byte)(y - SegmentOriginY);
+        //the X and Y within the middle(7th) chunk, can range from 48 to 55 (inclusive); first 6 chunks: 0-47, last 6 chunks: 56-103
+        public byte XMiddleChunk => (byte)(x - SegmentOriginX);
+        public byte YMiddleChunk => (byte)(y - SegmentOriginY);
 
         public Coordinate VerifyDistance(int x, int y, int steps = 15) //5 bits can only encode 32 values, from -16 to 15 and 0
         {

@@ -59,12 +59,12 @@ namespace ServerEmulator.Core.IO
             BaseStream.WriteByte((byte)(i >> 8));
         }
 
-        public void WriteJString(string s)
+        public void WriteTerminatedString(string str)
         {
-            byte[] bytes = new byte[s.Length];
+            byte[] bytes = new byte[str.Length];
 
             for (int i = 0; i < bytes.Length; i++)
-                bytes[i] = (byte)s[i];
+                bytes[i] = (byte)str[i];
 
             BaseStream.Write(bytes, 0, bytes.Length);
             BaseStream.WriteByte(10);
