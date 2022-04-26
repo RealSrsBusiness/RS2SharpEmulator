@@ -59,7 +59,7 @@ namespace ServerEmulator.Core
                 totalCycles++;
                 cycleTime10Secs += (int)sw.ElapsedMilliseconds;
 
-                if(totalCycles % 16 == 0) //calculate average cycle time for around the last 10 seconds
+                if(totalCycles % 16 == 0) //calculate average cycle time for about the last 10 seconds
                 {
                     double average = cycleTime10Secs / 16.0;
                     cycleTime10Secs = 0;

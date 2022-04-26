@@ -24,21 +24,23 @@ namespace ServerEmulator.Core.Game
     {
         //static XmlSerializer serializer = new XmlSerializer(typeof(Account));
         //static SHA256 hashing = SHA256.Create();
+        //RandomNumberGenerator secureRng = RandomNumberGenerator.Create();
         public string email, username, password, displayname, lastIp;
         DateTime registerDate, lastLogin, membership, mutedUntil, bannedUntil;
         public int gameTime, timesLoggedIn; //time spent online in seconds
         public bool flagged; //flagged for cheating
         public Rights rights;
-        public Gender gender = Gender.NOT_SET;
+        public Gender gender = Gender.NOT_SET; //"connect" with PlayerAppearance.gender
 
         public int x = SPAWN_X, y = SPAWN_Y, z = 0;
         public int energy = 100; //special attack?
-        public int[] equipment = new int[11];
+        
         public int[] playerLook = new int[6];
 
         public Skill[] skills = new Skill[21]; //contains prayer, hp etc.
         public ItemStack[] bank = new ItemStack[300];
         public ItemStack[] inventory = new ItemStack[28];
+        public int[] equipment = new int[11];
         
         public int[] friends = new int[200];
         public int[] ignores = new int[100];
@@ -54,7 +56,7 @@ namespace ServerEmulator.Core.Game
             
             for (int i = 0; i < skills.Length; i++)
             {
-                Skill s = new Skill() { level = 50, xp = 105000 };
+                Skill s = new Skill() { level = i, xp = 105000 };
                 skills[i] = s;
             }
 

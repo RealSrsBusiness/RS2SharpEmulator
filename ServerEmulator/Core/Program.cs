@@ -19,9 +19,9 @@ namespace ServerEmulator.Core
         public static bool DebugRunTime { get; private set; } = false;
 
         public static string windowTitle = $"RS2SharpEmulator v.{VERSION} - Rev #{Constants.SERVER_REV}";
-        public const double VERSION = 0.71;
+        public const double VERSION = 0.72;
 
-        //todo: disallow clicking in console window because it causes the server to pause
+        //todo: disallow clicking in console window because it causes the program to pause
         static void Main(string[] args)
         {
             TestPlayground();
@@ -52,7 +52,7 @@ namespace ServerEmulator.Core
             Processor = new Processor();
             Processor.Start();
 
-            DataLoader.LoadContent();
+            ContentLoading.Load();
 
             Log("Server successfully initialized @Thread " + Thread.CurrentThread.ManagedThreadId);
 
@@ -79,7 +79,7 @@ namespace ServerEmulator.Core
             }
         }
 
-        public static void Log(string text, params object[] format) //todo: do it proper by replacing the standard output (Console.Out)
+        public static void Log(string text, params object[] format) //todo: do it properly by replacing the standard output (Console.Out)
         {
             DateTime dt = DateTime.Now; //...also there's a better (already in-built) way to format time
             Console.WriteLine("[{0}:{1}:{2}] {3}", dt.Hour, dt.Minute, dt.Second, string.Format(text, format)); 
@@ -166,6 +166,13 @@ namespace ServerEmulator.Core
         }
 
         static void TestPlayground() {
+            ItemContainer ic = new ItemContainer(28);
+            ic.Add(995, 10000);
+
+            
+
+
+
             //ArraylistVsLinkedList();
             if(true) return;
 

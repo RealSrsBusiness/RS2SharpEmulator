@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using ServerEmulator.Core.IO;
+using System.Collections.Generic;
 
 namespace ServerEmulator.Core.Game
 {
@@ -16,6 +17,9 @@ namespace ServerEmulator.Core.Game
         int walkingQueue = -1;
 
         internal BufferedEffectStates effects = new BufferedEffectStates();
+
+        ItemContainer inventory = new ItemContainer(28), equipment = new ItemContainer(11);
+        SkillTracker skills = new SkillTracker();
 
         internal PlayerEntity(int id, Account account)
         {   
@@ -77,13 +81,118 @@ namespace ServerEmulator.Core.Game
         }
 
         /* 
-            1200 = head, 1201 = cape, 1202 = amulet, 1203 = sword/weapon, 1204 = chest, 1205 = shield, 
-            [1206], 1207 = legs, [1208], 1209 = gloves, 1210 = boots, [1211], 1212 = ring, 1213 = arrows, [1214] 
+            0 = head
+            1 = cape
+            2 = amulet
+            3 = sword/weapon
+            4 = chest
+            5 = shield
+            6 = [empty] 
+            7 = legs
+            8 = [empty] 
+            9 = gloves 
+            10 = boots
+            11 = [empty] 
+            12 = ring
+            13 = arrows
+            14 = [empty] 
         */
+        public const int HEAD = 0, CAPE = 1, AMULET = 2, SWORD = 3, CHEST = 4, SHIELD = 5, 
+            LEGS = 6, GLOVES = 7, BOOTS = 8, RING = 9, ARROWS = 10;
+
+        //needed because there are unused slots that don't align with the 'slot'-sprites on the equipment screen
+        int[] EQUIPMENT_INF_SLOTID = new int[] { 0, 1, 2, 3, 4, 5, 7, 9, 10, 12, 13 }; 
+        
 
         private object _lock = new object();
         public object Clone() => MemberwiseClone();
 
+    }
+
+    public class SkillTracker
+    {
+        Skill[] skills = new Skill[SkillCount];
+
+        
+        public const int ATTACK = 0, DEFENSE = 1, STRENGTH = 2, HITPOINTS = 3, RANGED = 4, PRAYER = 5, MAGIC = 6,
+            COOKING = 7, WOODCUTTING = 8, FLETCHING = 9, FISHING = 10, FIREMAKING = 11, CRAFTING = 12, 
+            SMITHING = 13, MINING = 14, HERBLORE = 15, AGILITY = 16, THIEVING = 17, SLAYER = 18, FARMING = 19,
+            RUNECRAFT = 20;
+        public const int SkillCount = 21;
+    }
+
+    public class ItemContainer 
+    {
+        ItemStack[] items;
+        internal List<(int slotId, Operation action)> actions { private set; get; } = new List<(int slotId, Operation action)>();
+
+        public ItemContainer(int size) => items = new ItemStack[size];
+
+        public int Count() => items.Length;
+        
+        public int GetFreeSlot() 
+        {
+            for (int i = 0; i < items.Length; i++)
+                if(items[i] == null)
+                    return i;
+            return -1; //no free slot
+        }
+
+        public int FindItem(int id) //returns the index of the slot with that item in it
+        {
+            for (int i = 0; i < items.Length; i++)
+                if(items[i].id == id)
+                    return i;
+            return -1;
+        }
+
+        internal int Add(int id, int count = 1) 
+        {
+            int slot = GetFreeSlot();
+
+            if(slot != -1) 
+            {
+                var item = items[slot] = new ItemStack() { id = id, amount = count };
+                actions.Add((slot, Operation.ADD));
+            }
+            return slot;
+        }
+
+        internal ref int Amount(int slot)
+        { 
+            actions.Add((slot, Operation.UPDATE_AMOUNT));
+            return ref items[slot].amount; //reference, kinda like a pointer in C, allows you to modify the value from the "outside"
+        }
+
+        internal void Remove(int slot) 
+        {
+            items[slot] = null;
+            actions.Add((slot, Operation.REMOVE));
+        }
+
+        internal (int, int) GetAtSlot(int slot) 
+        {
+            return (items[slot].id, items[slot].amount);
+        }
+
+        internal (int, int) InsertAtSlot(int slot, int id, int count = 1) 
+        {
+            var oldItem = GetAtSlot(slot);
+            items[slot] = new ItemStack() { id = id, amount = count };
+            return oldItem;
+        }
+
+        internal void SwapSlot(int slot1, int slot2) 
+        {
+            var temp = items[slot1];
+            items[slot1] = items[slot2];
+            items[slot2] = temp;
+            actions.Add((slot1 << 16 | (slot2 & 0xffff), Operation.SWAP_SLOT)); //todo: bit shift, kinda awkward
+        }
+
+        internal void ClearActions() => actions.Clear();
+
+        internal enum Operation { ADD, REMOVE, UPDATE_AMOUNT, SWAP_SLOT }
     }
 
     public class NPCEntity : Actor

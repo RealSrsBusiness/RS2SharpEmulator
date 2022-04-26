@@ -5,12 +5,12 @@ using System.Text;
 
 namespace ServerEmulator.Core.Game
 {
-    struct ItemStack
+    class ItemStack
     {
         public int id, amount;
     }
 
-    struct Skill
+    class Skill
     {
         public int level, xp;
     }
