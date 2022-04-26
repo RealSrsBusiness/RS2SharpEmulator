@@ -1,64 +1,108 @@
 using System;
 using ServerEmulator.Core.Game;
+using System.Reflection;
+using static ServerEmulator.Core.Game.RSEModule;
 
-namespace ServerEmulator.Content {
-    class CmdHandler : Core.Game.Content {
-        
-        public override void Load() {
-            Console.WriteLine("loaded cmdhandler. test commands available: ::chat ::hitsplat ::animation");
+namespace ServerEmulator.Content 
+{
+    [AttributeUsage(AttributeTargets.Method)]
+    class Command : Attribute 
+    {
+        public string cmd;
+        public int minArgs = -1; //unused for now
+        public Command(string cmd, int minArgs = -1) 
+        {
+            this.cmd = cmd;
+            this.minArgs = minArgs;
+        }
+    }
+    
+    class CmdHandler : RSEModule
+    {
+        Client c;
+        string[] args;
 
-            this.Commands.Add("chat", (Client c) => {
-                var chat = c.Player.effects.Chat;
-                chat.text = "Hello World!";
-            });
+        public override void Load() 
+        {
+            var methods = this.GetType().GetMethods(BindingFlags.Instance | BindingFlags.NonPublic);
+            
+            for (int i = 0; i < methods.Length; i++)
+            {
+                var method = methods[i];
+                var att = method.GetCustomAttribute<Command>();
+                if(att != null) 
+                {
+                    Commands.Add(att.cmd, (Client client, string[] arguments) => 
+                    {
+                        c = client;
+                        args = arguments;
+                        method.Invoke(this, null);
+                    });
+                }
+            }
 
-            this.Commands.Add("hitsplat", (Client c) => {
-                var dmg = c.Player.effects.Damage;
-                dmg.damage = 20;
-                dmg.type = 1; //red hitsplat
-                dmg.health = 10;
-                dmg.maxHealth = 50;
-            });
+            Console.WriteLine("loaded cmdhandler. test commands available: ::chat ::hitsplat ::anim");
+        }
 
-            this.Commands.Add("animation", (Client c) => {
-                var animation = c.Player.effects.Animation;
-                animation.animationId = 733; //lighting logs
-                animation.delay = 0;
-            });
+        [Command("chat")]
+        void Chat() {
+            var chat = c.Player.effects.Chat;
+            chat.text = "Hello World!";
+        }
 
-            this.Commands.Add("obj", (Client c) => {
-                //c.SpawnObjectForClient(5628);
-            });
+        [Command("hitsplat")]
+        void HitSplat() {
+            var dmg = c.Player.effects.Damage;
+            dmg.damage = 20;
+            dmg.type = 1; //red hitsplat
+            dmg.health = 10;
+            dmg.maxHealth = 50;
+        }
 
-            this.Commands.Add("stump", (Client c) => {
-                //c.SpawnObjectForClient(1341);
-            });
+        [Command("anim")]
+        void Animation() {
+            var animation = c.Player.effects.Animation;
+            animation.animationId = 733; //lighting logs
+            animation.delay = 0;
+        }
 
-            this.Commands.Add("rem", (Client c) => {
-                //c.RemoveObject();
-            });
+        [Command("all")]
+        void All() {
+            var dmg = c.Player.effects.Damage;
+            dmg.damage = 20;
+            dmg.type = 2;
+            dmg.maxHealth = 99;
 
-            this.Commands.Add("all", (Client c) => {
-                var dmg = c.Player.effects.Damage;
-                dmg.damage = 20;
-                dmg.type = 2;
-                dmg.maxHealth = 99;
+            var animation = c.Player.effects.Animation;
+            animation.animationId = 875;
 
-                var animation = c.Player.effects.Animation;
-                animation.animationId = 875;
+            var chat = c.Player.effects.Chat;
+            chat.text = "Hello World!";
+        }
 
-                var chat = c.Player.effects.Chat;
-                chat.text = "Hello World!";
-            });
+        [Command("walk")]
+        void Walk() {
+            c.Player.running = false;
+        }
 
+        [Command("run")]
+        void Run() {
+            c.Player.running = true;
+        }
 
-            this.Commands.Add("walk", (Client c) => {
-                c.Player.running = false;
-            });
+        [Command("obj")]
+        void PlaceObject() {
+            //c.SpawnObjectForClient(5628);
+        }
 
-            this.Commands.Add("run", (Client c) => {
-                c.Player.running = true;
-            });
+        [Command("stump")]
+        void Stump() {
+            //c.SpawnObjectForClient(1341);
+        }
+
+        [Command("rem")]
+        void RemoveObject() {
+            //c.RemoveObject();
         }
     }
 

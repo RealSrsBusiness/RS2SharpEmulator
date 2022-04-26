@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ServerEmulator.Content.Skills
 {
-    class Test : Core.Game.Content
+    class Test : RSEModule
     {
 
 #if (_TYPE_DEFINE)

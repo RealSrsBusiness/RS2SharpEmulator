@@ -121,10 +121,19 @@ namespace ServerEmulator.Core.Network
 
         private void Command() {
             var cmd = reader.ReadString().ToLower();
-            var dict = DataLoader.Commands;
+            var lookup = RSEModule.Commands;
 
-            if(dict.ContainsKey(cmd))
-                dict[cmd](client);
+            if(lookup.ContainsKey(cmd)) 
+            {
+                var funcPointer = lookup[cmd];
+                var pos = cmd.IndexOf(' ');
+                
+                string[] args = new string[0];
+                if(pos != -1)
+                    args = cmd.Substring(pos, cmd.Length - pos).Split(' ');
+
+                funcPointer(client, args);
+            }
             else 
                 Console.WriteLine($"cmd not found: {cmd}");
 
@@ -133,7 +142,7 @@ namespace ServerEmulator.Core.Network
             }
         }
 
-        private void Walk(int ignore = 0)
+        private void Walk(int ignore = 0) //todo: document
         {
             int count = (int)((reader.BaseStream.Length - 5 - ignore) / 2);
             int[] xs = new int[count];
@@ -163,7 +172,6 @@ namespace ServerEmulator.Core.Network
 
             Program.Debug("Do Walking @ " + Thread.CurrentThread.ManagedThreadId);
         }
-
 
         private void ActionButton()
         {
