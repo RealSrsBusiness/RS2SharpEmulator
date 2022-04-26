@@ -30,7 +30,7 @@ namespace ServerEmulator.Core.Game
             this.Account = account;
             connection.onDisconnect += (Connection c) => OnDisconnect();
             Packets = new StaticPackets(connection);
-            customStates = DataLoader.CreateCustomStates();
+            customStates = ContentLoading.NewStateInstanceSet();
 
             var playerSlot = AllocPlayerSlot();
 
@@ -242,7 +242,7 @@ namespace ServerEmulator.Core.Game
             Packets.SetPlayerContextMenu(1, false, "Attack");
             Packets.PlaySong(125);
 
-            Packets.WelcomePopup(201, 2222, false, 100100, 6666);
+            Packets.WelcomePopup(201, 42, false, new byte[] {127, 0, 0, 1}, 1234);
 
             Packets.Send();
         }

@@ -10,32 +10,44 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 
 using System.Xml;
-
 using Microsoft.CSharp;
 using System.CodeDom;
 using System.CodeDom.Compiler;
 
 namespace ServerEmulator.Core.Game
 {
-    class DataLoader
+    delegate void CommandHandle(Client c, string[] args);
+
+    [Obfuscation(Exclude = true)]
+    abstract class RSEModule
     {
-        public static bool LoadingComplete { get; private set; } = false;
-        internal static Dictionary<short, int[]> mapXteas = new Dictionary<short, int[]>();
+        public abstract void Load();
 
-        internal static NPC[] Npcs;
-        internal static Item[] Items;
-        internal static GameObject[] Objects;
-
-        internal static Dictionary<int, Action> ActionButtons;
-        internal static Dictionary<string, Interaction> Commands = new Dictionary<string, Interaction>();
-        internal static Definition PlayerActions;
-
-        internal static object[] CreateCustomStates()
+        public static int AddState(Type state)
         {
-            return null;
+            if (ContentLoading.Completed)
+                throw new InvalidOperationException("New states cannot be added once loading is complete.");
+
+            customStates.Add(state);
+            return customStates.IndexOf(state);
         }
 
-        internal static void LoadContent()
+        public static NPC[] Npcs;
+        public static Item[] Items;
+        public static GameObject[] Objects;
+
+        public static Dictionary<int, Action> ActionButtons;
+        public static Dictionary<string, CommandHandle> Commands = new Dictionary<string, CommandHandle>();
+        public static Definition PlayerActions;
+
+        static List<Type> customStates = new List<Type>();
+    }
+
+    static class ContentLoading 
+    {
+        public static bool Completed { get; private set; } = false;
+
+        internal static void Load()
         {
             ObjectMap();
             //MapXteas(); //untested
@@ -44,12 +56,8 @@ namespace ServerEmulator.Core.Game
             int internalModules = LoadModules(Assembly.GetExecutingAssembly());
             Console.WriteLine($"Finished loading modules: {internalModules} (Of which internal: {internalModules}, external: {0})");
 
-            LoadingComplete = true;
+            Completed = true;
             Program.Log("All data loaded.");
-        }
-
-        class MyType {
-            public int a { get; set; }
         }
 
         private static void Lists()
@@ -59,9 +67,9 @@ namespace ServerEmulator.Core.Game
                 Program.Warning("Content lists not loaded, using empty values instead");
 
                 //default 317 amounts
-                Items = new Item[6541]; //6541
-                Npcs = new NPC[2633]; //2633
-                Objects = new GameObject[9399]; //9399
+                RSEModule.Items = new Item[6541]; //6541
+                RSEModule.Npcs = new NPC[2633]; //2633
+                RSEModule.Objects = new GameObject[9399]; //9399
             }
 
             var options = new JsonSerializerOptions 
@@ -70,10 +78,10 @@ namespace ServerEmulator.Core.Game
                 WriteIndented = true //pretty printing
             };
                 
-            var coolObject = new MyType[] {
-                new MyType { a = 10 },
-                new MyType { a = 20 },
-                new MyType { a = 30 },
+            var coolObject = new TestType[] {
+                new TestType { a = 10 },
+                new TestType { a = 20 },
+                new TestType { a = 30 },
             };
 
             var result = JsonSerializer.Serialize(coolObject, options);
@@ -81,6 +89,14 @@ namespace ServerEmulator.Core.Game
             ;
         }
 
+        class TestType {
+            public int a { get; set; }
+        }
+
+        internal static object[] NewStateInstanceSet()
+        {
+            return null;
+        }
         
         private static int LoadModules(Assembly netAsm)
         {
@@ -91,8 +107,8 @@ namespace ServerEmulator.Core.Game
             {
                 var type = types[i];
 
-                if(type.IsSubclassOf(typeof(Content))) {
-                    var content = (Content)Activator.CreateInstance(type);
+                if(type.IsSubclassOf(typeof(RSEModule))) {
+                    var content = (RSEModule)Activator.CreateInstance(type);
                     content.Load();
                     loaded++;
                 }
@@ -130,5 +146,8 @@ namespace ServerEmulator.Core.Game
                 throw new Exception("Mapdata");
             }
         }
+
+        internal static Dictionary<short, int[]> mapXteas = new Dictionary<short, int[]>();
     }
+
 }

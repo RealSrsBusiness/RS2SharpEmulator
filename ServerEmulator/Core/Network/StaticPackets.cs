@@ -227,8 +227,10 @@ namespace ServerEmulator.Core.Network
 
         public void WelcomePopup(
             byte daysSinceRec, ushort unreadMsg, 
-            bool isMember, int lastIp, ushort daysLastLogin)
+            bool isMember, byte[] ip, ushort daysLastLogin)
         {
+            int lastIp = ip[1] << 24 | ip[0] << 16 | ip[3] << 8 | ip[2];
+
             c.WriteOpCode(INTF_WELCOME);
             c.Writer.WriteNegatedByte(daysSinceRec);
             c.Writer.WriteShortA(unreadMsg);
