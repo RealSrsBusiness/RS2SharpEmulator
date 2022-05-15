@@ -19,7 +19,7 @@ namespace ServerEmulator.Core.Game
     delegate void CommandHandle(Client c, string[] args);
 
     [Obfuscation(Exclude = true)]
-    abstract class RSEModule
+    abstract class RSEModule //make sure you include "using static ServerEmulator.Core.Game.RSEModule"
     {
         public abstract void Load();
 
@@ -38,7 +38,8 @@ namespace ServerEmulator.Core.Game
 
         public static Dictionary<int, Action> ActionButtons;
         public static Dictionary<string, CommandHandle> Commands = new Dictionary<string, CommandHandle>();
-        public static Definition PlayerActions;
+        public static Definition PlayerActions; 
+        //todo: player events like level up, respawn; custom server commands
 
         static List<Type> customStates = new List<Type>();
     }

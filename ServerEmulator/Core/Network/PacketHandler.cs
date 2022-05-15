@@ -120,24 +120,24 @@ namespace ServerEmulator.Core.Network
         }
 
         private void Command() {
-            var cmd = reader.ReadString().ToLower();
+            var cmdLine = reader.ReadString().ToLower().Split(' ');
+            var command = cmdLine[0];
+
             var lookup = RSEModule.Commands;
-
-            if(lookup.ContainsKey(cmd)) 
+            if(lookup.ContainsKey(command)) 
             {
-                var funcPointer = lookup[cmd];
-                var pos = cmd.IndexOf(' ');
-                
-                string[] args = new string[0];
-                if(pos != -1)
-                    args = cmd.Substring(pos, cmd.Length - pos).Split(' ');
+                var funcPointer = lookup[command];
 
+                string[] args = new string[cmdLine.Length - 1];
+                if(args.Length > 0)
+                    Array.Copy(cmdLine, 1, args, 0, args.Length);
+                
                 funcPointer(client, args);
             }
             else 
-                Console.WriteLine($"cmd not found: {cmd}");
+                Console.WriteLine($"cmd not found: {command}");
 
-            if(cmd.Equals("vrs")) {
+            if(command.Equals("vrs")) {
                 Console.WriteLine("R-S2#E.2BC");
             }
         }

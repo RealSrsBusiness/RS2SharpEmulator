@@ -10,7 +10,7 @@ namespace ServerEmulator.Content
         //tree stump: 1341
         public override void Load() 
         {
-            Console.WriteLine("loaded woodcut test. type ::axe to get an axe");
+            Console.WriteLine("loaded woodcut test. (not working yet)");
 
             Commands.Add("axe", (Client c, string[] args) => {
 

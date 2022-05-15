@@ -42,7 +42,7 @@ namespace ServerEmulator.Core
             ']' 
         };
 
-        public static int[] OUTGOING_SIZES = {
+        public static int[] OUTGOING_SIZES = { //-1 = byte length, -2 = short length
             0, 0, 0, 0, 6, 0, 0, 0, 4, 0, // 0
 		    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 10
 		    0, 0, 0, 0, 1, 0, 0, 0, 0, 0, // 20
