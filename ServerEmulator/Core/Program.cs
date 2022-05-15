@@ -167,14 +167,17 @@ namespace ServerEmulator.Core
 
         static void TestPlayground() {
             ItemContainer ic = new ItemContainer(28);
-            ic.Add(995, 10000);
+
+            int id = 0;
+            while(ic.Add(id) != -1) 
+            {
+                id++;
+            }
+            ;
 
             
-
-
-
-            //ArraylistVsLinkedList();
             if(true) return;
+            //ArraylistVsLinkedList();
 
             byte[] arr = "hello".ToRSChatString();
 

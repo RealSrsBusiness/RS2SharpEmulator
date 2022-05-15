@@ -105,11 +105,37 @@ namespace ServerEmulator.Core.Network
             c.Writer.WriteTerminatedString(text);
             c.FinishVarPacket(p);
         }
-    
-        public void ClearInventory(ushort id)
+
+        public void ClearItemContainer(ushort intfId)
         {
             c.WriteOpCode(ITEM_ALL_CLEAR);
-            c.Writer.WriteShort(id);
+            c.Writer.WriteLEShort(intfId);
+        }
+
+        public void SetItemsBySlots(ushort intfId, (short slot, ushort? id, int amt)[] items)
+        {
+            var p = c.WriteOpCodeVar(ITEM_SLOT_SET, VarSizePacket.Type.SHORT);
+
+            c.Writer.WriteShort(intfId);
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                var item = items[i];
+                c.Writer.WriteDynamicShort(item.slot);
+                c.Writer.WriteShort(item.id != null ? (int)item.id + 1 : 0); //+1 because 0 is reserved for "empty"
+
+                if(item.amt > 254) 
+                {
+                    c.Writer.WriteByte(255);
+                    c.Writer.WriteInt(item.amt);
+                }
+                else 
+                {
+                    c.Writer.WriteByte(item.amt);
+                }
+            }
+
+            c.FinishVarPacket(p);
         }
 
         public void SetItems(ushort intfId, ItemStack[] items)
@@ -131,15 +157,10 @@ namespace ServerEmulator.Core.Network
                 {
                     c.Writer.WriteByte(s.amount);
                 }
-                c.Writer.WriteLEShortA(s.id + 1);
+                c.Writer.WriteLEShortA(s.id + 1); 
             }
 
             c.FinishVarPacket(p);
-        }
-
-        public void SetItemsBySlots()
-        {
-            var p = c.WriteOpCodeVar(ITEM_SLOT_SET, VarSizePacket.Type.SHORT);
         }
 
         public void ResetAnimations()
@@ -229,13 +250,13 @@ namespace ServerEmulator.Core.Network
             byte daysSinceRec, ushort unreadMsg, 
             bool isMember, byte[] ip, ushort daysLastLogin)
         {
-            int lastIp = ip[1] << 24 | ip[0] << 16 | ip[3] << 8 | ip[2];
+            int lastIp = ip[0] << 24 | ip[1] << 16 | ip[2] << 8 | ip[3];
 
             c.WriteOpCode(INTF_WELCOME);
             c.Writer.WriteNegatedByte(daysSinceRec);
             c.Writer.WriteShortA(unreadMsg);
             c.Writer.WriteByte(isMember ? 1 : 0);
-            c.Writer.WriteInt(lastIp);
+            c.Writer.WriteIMEInt(lastIp);
             c.Writer.WriteShort(daysLastLogin);
         }
 

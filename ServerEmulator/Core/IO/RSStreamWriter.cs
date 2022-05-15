@@ -125,6 +125,20 @@ namespace ServerEmulator.Core.IO
             BaseStream.WriteByte((byte)(i + 128));
         }
 
+        public void WriteDynamicShort(short value) //readUSmart in client
+        { 
+            if(value > 127) 
+            {
+                byte first = (byte)((value >> 8) | 128); //most significant (128) bit signifies more data
+                WriteByte(first);
+                WriteByte((byte)value);
+            }
+            else 
+            {
+                WriteByte(value);
+            }
+        }
+
         public void WriteTriByte(int i)
         {
             BaseStream.WriteByte((byte)(i >> 16));
@@ -133,6 +147,7 @@ namespace ServerEmulator.Core.IO
         }
 
         //alternative names
+        public void WriteShortSmart(short i) => WriteDynamicShort(i);
         public void WriteWord(int i) { WriteShort(i); }
 
         public void WriteDWord(int i) { WriteInt(i); }

@@ -173,6 +173,7 @@ namespace ServerEmulator.Core.Game
 
             //todo: 01-14: fully test this function; implement chat, hitsplats and animations; 
             //todo: 01-17: implement inventory and equipment; woodcutting test, object replacement
+            UpdatePlayerStates();
             Packets.Send();
         }
 
@@ -195,6 +196,32 @@ namespace ServerEmulator.Core.Game
 
 
         static int[] SIDE_BARS = { 2423, 3917, 638, 3213, 1644, 5608, 1151, -1, 5065, 5715, 2449, 904, 147, 962 };
+
+        private void UpdatePlayerStates() //todo: unreadable mess
+        {
+            var actions = Player.inventory.actions;
+            var inventoryUpdates = new (short slot, ushort? id, int amt)[actions.Count];
+
+            for (int i = 0; i < actions.Count; i++)
+            {
+                var curAction = actions[i];
+                var item = Player.inventory.GetAtSlot(curAction.slotId);
+
+                ushort? id = (ushort)item.id;
+
+                if(curAction.action == ItemContainer.Operation.REMOVE)
+                    id = null;
+
+                inventoryUpdates[i] = new ((short)curAction.slotId, id, item.amt);
+            }
+
+            Packets.SetItemsBySlots(3214, inventoryUpdates);
+
+            if(actions.Count > 0)
+                Console.WriteLine("inventory updated. " + actions.Count);
+
+            actions.Clear();
+        }
 
         private void SendInitialState()
         {
@@ -224,12 +251,15 @@ namespace ServerEmulator.Core.Game
             //for (int i = 0; i < inv.Length; i++)
             //    inv[i] = new ItemStack() { id = 1511, amount = int.MaxValue };
 
+
             ItemStack[] inv = new ItemStack[3];
             inv[0] = new ItemStack() { id = 1511, amount = 1 };
             inv[1] = new ItemStack() { id = 590, amount = 1 };
             inv[2] = new ItemStack() { id = 882, amount = 1 };
 
-            Packets.SetItems(3214, inv); //inventory
+            Packets.ClearItemContainer(3214);
+            //Packets.SetItems(3214, inv); //inventory
+            
 
             ItemStack[] equip = new ItemStack[15];
 
